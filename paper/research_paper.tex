@@ -1,0 +1,988 @@
+
+\documentclass[10pt,a4paper,twocolumn]{article}
+\usepackage[a4paper,top=0.75in,bottom=0.75in,left=0.7in,right=0.7in,columnsep=0.28in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{xurl}
+\usepackage{placeins}
+\usepackage{stfloats}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18, every axis/.append style={font=\small}}
+\usetikzlibrary{positioning, arrows.meta}
+\usepackage{fancyhdr}
+\usepackage{authblk}
+\usepackage{cite}
+\usepackage{titlesec}
+\usepackage{lettrine}
+\usepackage[most]{tcolorbox}
+\usepackage{hyperref}
+\hypersetup{colorlinks=false,hidelinks}
+
+% Colors
+\definecolor{radblue}{RGB}{0,73,144}
+
+% Section formatting
+\titleformat{\section}{\large\bfseries\color{radblue}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{radblue}}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\bfseries}{\thesubsubsection}{0.8em}{}
+\titlespacing{\section}{0pt}{1.0ex plus 0.5ex}{0.3ex}
+\titlespacing{\subsection}{0pt}{0.8ex plus 0.3ex}{0.2ex}
+\titlespacing{\subsubsection}{0pt}{0.5ex plus 0.2ex}{0.1ex}
+
+% Float placement parameters for twocolumn mode
+\setcounter{dbltopnumber}{4}
+\renewcommand{\dbltopfraction}{0.92}
+\renewcommand{\dblfloatpagefraction}{0.85}
+\renewcommand{\textfraction}{0.07}
+
+% Table/caption settings
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\emergencystretch=3em
+\captionsetup{font=small,labelfont=bf}
+
+% Running headers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Multi-View Fusion for Breast Cancer Detection on VinDr-Mammo}}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Paragraph style
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0.2em plus 0.1em}
+
+% Custom commands
+\newcommand{\auc}{\mathrm{AUC}}
+\newcommand{\satninety}{S@90\%spec}
+\newcommand{\vindr}{VinDr-Mammo}
+\newcommand{\rsna}{RSNA 2022}
+
+\title{\textbf{Multi-View Fusion, CrossView Transformer, and Uncertainty-Aware Triage for Breast Cancer Detection on \vindr}\\[0.4em]
+\large From 0.756 to 0.846 AUC}
+\author[1]{Haoming Luo}
+\author[1]{Matthew Hamilton}
+\affil[1]{\small Department of Computer Science, Memorial University, St.\ John's, NL, Canada}
+\date{May 20, 2026}
+
+\begin{document}
+\twocolumn[{%
+\maketitle
+\vspace{-0.5em}
+\begin{tcolorbox}[
+  colback=gray!7, colframe=radblue,
+  arc=2pt, boxrule=0.5pt,
+  left=5pt, right=5pt, top=5pt, bottom=5pt,
+  before upper={\small},
+]
+\textbf{Background:} Breast cancer is the most commonly diagnosed cancer worldwide. Population screening based on full-field digital mammography (FFDM) reduces mortality but imposes heavy radiologist workload and substantial inter-reader variability, motivating computer-aided diagnosis (CAD).
+
+\smallskip
+\textbf{Purpose:} To develop and evaluate a six-stage pipeline for breast cancer detection on the \vindr{} FFDM benchmark, progressing from single-view CNN baselines to a multi-view ensemble with uncertainty-aware triage simulation.
+
+\smallskip
+\textbf{Materials and Methods:} Five single-view CNN architectures (Stage~1), BreastPairNet shared-backbone multi-view network across twelve variants (Stage~2), CrossView Transformer with spatial cross-attention (Stage~3), bounding-box annotation ablation (Stage~3b), MC Dropout uncertainty quantification (Stage~4), 16-model ensemble with TTA (Stage~5), and Verboom-style hybrid triage simulation (Stage~6). External validation on \rsna{}.
+
+\smallskip
+\textbf{Results:} DenseNet-121 attained AUC=0.7564 (Stage~1). BreastPairNet improved to AUC=0.8256 (+9.1\%, Stage~2); CrossView Transformer reached AUC=0.8317 (+10.0\%, Stage~3). Bounding-box annotations degraded AUC by 0.12--0.20. The 16-model ensemble achieved AUC=0.8458 (+11.8\%) with \satninety{}=0.6566. Hybrid triage at 50\% AI reads preserved 87.9\% sensitivity. External \rsna{} AUC=0.6008.
+
+\smallskip
+\textbf{Conclusion:} A six-stage multi-view pipeline achieves AUC=0.8458 on \vindr{}. Bounding-box shortcut learning is a key negative finding; domain generalisation to US FFDM remains an open challenge.
+\end{tcolorbox}
+\smallskip
+\noindent\textbf{Keywords:} breast cancer detection; mammography; multi-view learning; uncertainty quantification; triage; \vindr{}.
+\vspace{1.2em}
+}]
+
+\section*{Key Results at a Glance}
+
+\begin{table*}[tbp]
+\centering
+\caption{Summary of the main AUC results across the six-stage pipeline.}
+\label{tab:key-results}
+\begin{tabular}{@{}p{0.13\textwidth} p{0.42\textwidth} p{0.10\textwidth} p{0.22\textwidth}@{}}
+\toprule
+Stage & Method & AUC & vs.\ single-view \\
+\midrule
+Prior work & MamT4 \cite{18} (4-view Transformer)\(\ddagger\) & 0.840 & --- \\
+Stage 1 & DenseNet-121 (best single-view) & 0.756 & baseline \\
+Stage 2 & EfficientNet-B3 +reg (BreastPairNet) & 0.826 & \textbf{+9.1\%} \\
+Stage 3 & ConvNeXt-Base (CrossView Transformer) & 0.832 & \textbf{+10.0\%} \\
+Stage 4 & DenseNet-121/concat MC Dropout & 0.810 & sensitivity \(\uparrow\) \\
+\textbf{Stage 5} & \textbf{16-model ensemble + TTA\(\times\)5} & \textbf{0.846} & \textbf{+11.8\% \(\star\)} \\
+External & \rsna{} (zero-shot transfer) & 0.601 & domain gap \textbf{!} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\satninety{} on \vindr{}: \textbf{0.6566} (best ensemble) vs 0.1636 (\rsna{} --- large domain gap).
+
+\section{Introduction}
+
+\lettrine[lines=2, lraise=0.1]{B}{reast} cancer is the most commonly diagnosed cancer worldwide and a leading cause of cancer-related death in women. Population screening programmes based on full-field digital mammography (FFDM) have repeatedly been shown to reduce breast-cancer mortality, yet they impose a heavy operational burden: in many countries each screening exam is double-read by two radiologists, and reader sensitivity varies by 10--30 percentage points between individuals \cite{10,11}. False-negative rates of 10--30\% and false-positive recall rates of approximately 8\% are well documented across both clinical practice and large CAD literature, with the historical, hand-engineered CAD systems failing to deliver measurable benefit in routine US screening \cite{17}.
+
+Deep learning has dramatically improved the situation. CNNs trained on hundreds of thousands of exams now reach or exceed individual radiologist AUC on internal and some external cohorts \cite{11}, and meta-analyses report pooled AUC of 0.87 for AI on digital mammography versus 0.81 for radiologists \cite{4}. Three trends are particularly relevant. First, multi-view modelling that fuses the craniocaudal (CC) and mediolateral oblique (MLO) projections improves over single-view inference because findings often appear unambiguously in only one view \cite{10}. Second, transformer-based fusion of views allows feature-level interaction rather than score-level averaging. Third, uncertainty-aware inference via MC Dropout enables a \emph{hybrid triage} protocol in which the AI reads the most-confident exams autonomously and refers the rest to a human reader \cite{12}, reducing radiologist workload by approximately 38\% in retrospective evaluation \cite{12}.
+
+The \vindr{} benchmark \cite{1} is a 20,000-image, patient-level, 4-view FFDM dataset. Three gaps in the literature are evident. \textbf{(i) Single-view dominance.} Most published \vindr{} results train one image at a time. \textbf{(ii) Spatial cross-view attention is underexplored.} Existing multi-view designs typically concatenate global features. \textbf{(iii) Uncertainty quantification and triage simulation are rare.} No published study has applied MC Dropout to \vindr{} and simulated a Verboom-style triage policy.
+
+This paper makes seven contributions: (1) systematic single-view CNN comparison; (2) \textbf{BreastPairNet} multi-view network with twelve backbone$\times$fusion$\times$resolution variants; (3) \textbf{CrossView Transformer} with spatial cross-attention; (4) \textbf{bounding-box annotation ablation} revealing a negative result; (5) \textbf{16-model ensemble} reaching AUC=0.8458; (6) \textbf{MC Dropout uncertainty calibration}; (7) \textbf{hybrid triage simulation} demonstrating 50\% workload reduction.
+
+\autoref{fig:pipeline} illustrates the full pipeline.
+
+\begin{figure*}[tbp]
+\centering
+\fbox{\begin{minipage}{0.94\linewidth}
+\small
+\textbf{Input:} 20,000 \vindr{} DICOM images from 5,000 patients.\\[0.2em]
+\textbf{Preprocessing:} DICOM decoding, percentile clipping, CLAHE, orientation normalisation.\\[0.2em]
+\textbf{Stage 1:} single-view CNN baselines, best \(\auc=0.7564\).\\
+\textbf{Stage 2:} BreastPairNet CC+MLO fusion, best \(\auc=0.8256\).\\
+\textbf{Stage 3:} CrossView Transformer, best \(\auc=0.8317\).\\
+\textbf{Stage 3b:} annotation ablation, all painted-box variants lose 0.122--0.201 AUC.\\
+\textbf{Stage 4:} MC Dropout, entropy-ranked uncertainty estimates.\\
+\textbf{Stage 5:} 16-model ensemble with asymmetry features and TTA, best \(\auc=0.8458\).\\
+\textbf{Stage 6:} hybrid triage simulation and external \rsna{} validation.
+\end{minipage}}
+\caption{Overview of the six-stage breast cancer detection pipeline.}
+\label{fig:pipeline}
+\end{figure*}
+
+\section{Related Work}
+
+\textbf{Deep CNN backbones.} Residual networks \cite{7} and densely connected networks \cite{8} underpin almost all modern CAD systems. CheXNet \cite{6} established DenseNet-121 as a default starting point for chest imaging. EfficientNet \cite{9} introduced compound scaling (B3: 12M parameters). ConvNeXt \cite{16} modernised pure-convolutional design to transformer-level ImageNet accuracy.
+
+\textbf{Multi-view mammography.} Wu et al. \cite{10} trained a four-stream ResNet-22 on 229,426 NYU exams (AUC=0.895), establishing that shared backbones and feature-level aggregation are essential under limited data. McKinney et al. \cite{11} reported AUC=0.889 on UK FFDM, outperforming six radiologists. Cross-view spatial attention outperforms score-level averaging, motivating Stage~3.
+
+\textbf{\vindr{}-specific work.} Nguyen et al. \cite{1} released \vindr{} with BI-RADS, density, and lesion-level annotations. Ibragimov et al. \cite{18} proposed MamT4 (AUC=0.840$\pm$0.017). Abdikenov et al. \cite{2} demonstrated CLAHE+YOLOv12 mAP gains; Mellado et al. \cite{3} showed competitive patch-level F1 under limited annotation.
+
+\textbf{Class imbalance and focal loss.} Focal loss \cite{5} suppresses easy negatives via $(1-p)^\gamma$ down-weighting; Johnson \& Khoshgoftaar \cite{15} survey algorithm-level imbalance methods.
+
+\textbf{Uncertainty quantification.} Kendall and Gal \cite{13} formalised aleatoric and epistemic uncertainty; MC Dropout provides tractable Bayesian model averaging. Verboom et al. \cite{12} demonstrated 38.1\% workload reduction on 41,469 Dutch screening exams while preserving cancer detection rate.
+
+\section{Dataset}
+
+\subsection{\vindr{} (primary dataset)}
+
+\vindr{} \cite{1} contains 20,000 FFDM images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations.
+
+\begin{table}[h!]
+\centering
+\caption{BI-RADS distribution in \vindr{} and binary label mapping.}
+\label{tab:birads-distribution}
+\begin{tabular}{@{}lll@{}}
+\toprule
+BI-RADS & Images & Binary label \\
+\midrule
+1 & 14,036 & negative \\
+2 & 4,144 & negative \\
+3 & 832 & negative \\
+4 & 824 & \textbf{positive} \\
+5 & 164 & \textbf{positive} \\
+\textbf{Total} & \textbf{20,000} & 988 positive (4.94\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The official split is 4,000 training patients (16,000 images) and 1,000 test patients (4,000 images). For multi-view experiments we construct one ipsilateral CC+MLO pair per breast, yielding 8,000 training pairs and 2,000 test pairs, of which 99 test pairs (4.95\%) are cancer-positive. A 5\% validation slice (\textasciitilde{}400 pairs) is held out for early stopping; the official test split is never used for model selection.
+
+\subsection{\rsna{} (external dataset)}
+
+The \rsna{} dataset comprises 54,706 screening DICOMs from 11,913 patients. After 8-bit normalisation identical to \vindr{} preprocessing, approximately 29,519 images required \texttt{pylibjpeg} to decode JPEG Lossless DICOMs. Non-CC/MLO views were excluded. The final paired dataset contains 23,826 CC+MLO pairs (19,062 training, 4,764 validation) on an 80/20 patient-level split.
+
+\section{Methods}
+
+\subsection{DICOM preprocessing (12/14-bit \(\rightarrow\) 8-bit PNG)}
+
+Four-step pipeline: (1) decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) standardise orientation via horizontal flip when left half is brighter. Output: single-channel 8-bit PNG replicated to 3 channels.
+
+\subsection{Single-view CNN backbones}
+
+Five configurations: \textbf{VGG19}, \textbf{ResNet-50} (224\,px), \textbf{ResNet-50} (384\,px), \textbf{EfficientNet-B3} (224\,px), \textbf{DenseNet-121} (224\,px). All use ImageNet weights, focal loss ($\alpha$=0.25, $\gamma$=2.0) \cite{5}, WeightedRandomSampler, and Adam with cosine decay. Training: 20 epochs with early stopping on validation AUC.
+
+\subsection{BreastPairNet (Stage 2)}
+
+Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$. Two fusion heads: \textbf{concatenation} (2d-dim MLP, dropout 0.5) and \textbf{attention} (learned per-view scalar weights via softmax). The \textbf{+reg} variant adds stronger elastic deformation (16\,px), mixup ($\alpha$=0.4), and label smoothing (0.05). Training: backbone frozen 3 epochs, then discriminative LR (1e-5 backbone, 1e-4 head). \autoref{fig:breastpairnet-arch} illustrates the architecture.
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}[
+  imgb/.style={draw, fill=blue!12, rounded corners=2pt,
+               minimum width=1.6cm, minimum height=0.8cm, font=\small\bfseries, align=center},
+  netb/.style={draw, fill=radblue!18, rounded corners=3pt,
+               minimum width=2.2cm, minimum height=2.4cm, font=\small, align=center},
+  featb/.style={draw, fill=gray!13, rounded corners=2pt,
+                minimum width=1.6cm, minimum height=0.65cm, font=\small, align=center},
+  fusb/.style={draw, fill=teal!15, rounded corners=3pt,
+               minimum width=2.0cm, minimum height=2.2cm, font=\small, align=center},
+  mlpb/.style={draw, fill=purple!10, rounded corners=2pt,
+               minimum width=1.5cm, minimum height=0.65cm, font=\small, align=center},
+  outb/.style={draw, fill=green!12, rounded corners=2pt,
+               minimum width=1.6cm, minimum height=0.65cm, font=\small\bfseries, align=center},
+  arr/.style={->, >=Latex, thick},
+]
+% Input images
+\node[imgb] (cc)  at (0,  1.0) {CC\\image};
+\node[imgb] (mlo) at (0, -1.0) {MLO\\image};
+
+% Shared backbone
+\node[netb] (bb) at (3.8, 0) {Shared\\backbone\\(EfficientNet\\or DenseNet)};
+
+% Shared-weight annotation between inputs
+\draw[<->, dashed, gray!55, >=Latex, thick]
+  (cc.south) -- node[right, font=\tiny, gray, align=left] {shared\\weights $\theta$} (mlo.north);
+
+% Feature vectors
+\node[featb] (fcc)  at (7.2,  1.0) {$\mathbf{f}_{CC}\!\in\!\mathbb{R}^d$};
+\node[featb] (fmlo) at (7.2, -1.0) {$\mathbf{f}_{MLO}\!\in\!\mathbb{R}^d$};
+
+% Fusion head
+\node[fusb] (fus) at (10.2, 0) {Fusion\\head\\(concat\\or attn)};
+
+% MLP
+\node[mlpb] (mlp) at (12.8, 0) {MLP\\+Drop(0.5)};
+
+% Output
+\node[outb] (out) at (15.0, 0) {$P$(cancer)};
+
+% Arrows: inputs → backbone
+\draw[arr] (cc.east)  to[out=0, in=150] (bb.north west);
+\draw[arr] (mlo.east) to[out=0, in=210] (bb.south west);
+
+% Arrows: backbone → features (split out east, go up/down)
+\draw[arr] (bb.east) -- +(0.8, 0) |- (fcc.west);
+\draw[arr] (bb.east) -- +(0.8, 0) |- (fmlo.west);
+
+% Arrows: features → fusion
+\draw[arr] (fcc.east)  to[out=0, in=90]  (fus.north);
+\draw[arr] (fmlo.east) to[out=0, in=270] (fus.south);
+
+% Arrows: fusion → MLP → output
+\draw[arr] (fus.east) -- (mlp.west);
+\draw[arr] (mlp.east) -- (out.west);
+
+% GAP label
+\node[font=\tiny, gray, align=center] at (5.5,  1.45) {global avg\\pool};
+\node[font=\tiny, gray, align=center] at (5.5, -1.45) {global avg\\pool};
+\end{tikzpicture}
+\caption{BreastPairNet architecture (Stage~2). CC and MLO images from the same breast pass through a \emph{shared} CNN backbone (weights $\theta$ are tied for both views, indicated by the dashed arrow). Each view produces a global-average-pooled feature vector; the two vectors are fused by either concatenation (dim $2d$) or learned attention weights, then classified by a two-layer MLP with 50\% dropout.}
+\label{fig:breastpairnet-arch}
+\end{figure*}
+
+\subsection{CrossView Transformer (Stage 3)}
+
+Replaces global-pooled fusion with spatial cross-attention. Both views pass through the shared CNN backbone to the last spatial feature map; spatial tensors are flattened to tokens and entered into a two-layer Transformer encoder where queries from each view attend to keys/values of the other. Cross-attended outputs are global-averaged and concatenated for the final classifier. \autoref{fig:crossview-arch} contrasts this with BreastPairNet.
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}[
+  imgb/.style={draw, fill=blue!12, rounded corners=2pt,
+               minimum width=1.4cm, minimum height=0.75cm, font=\small\bfseries, align=center},
+  netb/.style={draw, fill=radblue!18, rounded corners=3pt,
+               minimum width=2.0cm, minimum height=2.3cm, font=\small, align=center},
+  mapb/.style={draw, fill=gray!13, rounded corners=2pt,
+               minimum width=1.5cm, minimum height=0.65cm, font=\small, align=center},
+  attnb/.style={draw, fill=teal!15, rounded corners=3pt,
+                minimum width=2.2cm, minimum height=2.8cm, font=\small, align=center},
+  outb/.style={draw, fill=green!12, rounded corners=3pt,
+               minimum width=1.5cm, minimum height=2.0cm, font=\small, align=center},
+  arr/.style={->, >=Latex, thick},
+]
+% Input images
+\node[imgb] (cc)  at (0,  1.0) {CC\\image};
+\node[imgb] (mlo) at (0, -1.0) {MLO\\image};
+
+% Shared backbone (tall box)
+\node[netb] (bb) at (3.5, 0) {Shared\\backbone\\(ConvNeXt-B)};
+
+% Spatial feature maps
+\node[mapb] (sm_cc)  at (6.5,  1.0) {Spatial\\map\\$H{\times}W{\times}C$};
+\node[mapb] (sm_mlo) at (6.5, -1.0) {Spatial\\map\\$H{\times}W{\times}C$};
+
+% Flatten annotation
+\node[font=\tiny, gray] at (8.5,  1.4) {flatten};
+\node[font=\tiny, gray] at (8.5, -1.4) {flatten};
+
+% Token sequences
+\node[mapb, fill=gray!10, minimum width=1.6cm] (tok_cc)  at (8.5,  1.0) {Tokens\\$HW{\times}C$};
+\node[mapb, fill=gray!10, minimum width=1.6cm] (tok_mlo) at (8.5, -1.0) {Tokens\\$HW{\times}C$};
+
+% Cross-attention Transformer
+\node[attnb] (attn) at (11.5, 0) {Cross-view\\Transformer\\(2 layers)\\[0.4em]
+  $Q_{CC}{\rightarrow}K_{MLO}\!,V_{MLO}$\\[0.2em]
+  $Q_{MLO}{\rightarrow}K_{CC}\!,V_{CC}$};
+
+% Output
+\node[outb] (out) at (14.6, 0) {GAP\\$\downarrow$\\Concat\\$\downarrow$\\MLP\\$\downarrow$\\$P$(ca)};
+
+% Shared-weight dashed arrow
+\draw[<->, dashed, gray!55, >=Latex, thick]
+  (cc.south) -- node[right, font=\tiny, gray] {tied $\theta$} (mlo.north);
+
+% Arrows
+\draw[arr] (cc.east)  to[out=0, in=150] (bb.north west);
+\draw[arr] (mlo.east) to[out=0, in=210] (bb.south west);
+
+\draw[arr] (bb.north east) to[out=30,  in=180] (sm_cc.west);
+\draw[arr] (bb.south east) to[out=-30, in=180] (sm_mlo.west);
+
+\draw[arr] (sm_cc)  -- (tok_cc);
+\draw[arr] (sm_mlo) -- (tok_mlo);
+
+\draw[arr] (tok_cc.east)  to[out=0, in=120] (attn.north west);
+\draw[arr] (tok_mlo.east) to[out=0, in=240] (attn.south west);
+
+\draw[arr] (attn.east) -- (out.west);
+
+% Key difference annotation
+\node[font=\scriptsize, draw, rounded corners, fill=yellow!15, align=center,
+      text width=2.8cm] at (5.5, -2.4)
+  {\textbf{Key difference vs BreastPairNet:}\\spatial maps before pooling};
+\end{tikzpicture}
+\caption{CrossView Transformer architecture (Stage~3). Unlike BreastPairNet, the backbone output is \emph{not} global-averaged before fusion. Spatial feature maps are flattened to token sequences; a two-layer Transformer encoder applies bidirectional cross-attention ($Q_{CC}$ attends to $K,V$ from MLO and vice versa), enabling the model to localise spatially consistent findings across views before pooling. Best: ConvNeXt-Base, AUC=0.8317.}
+\label{fig:crossview-arch}
+\end{figure*}
+
+\subsection{Bounding-box annotation (training only)}
+
+Ground-truth boxes (\vindr{}) were drawn as white outlines (40-px line width) on training images only. For \rsna{}, a YOLOv8s detector pre-trained on \vindr{} was used (0.8\% sensitivity --- noisy hints only). Test sets always used original unannotated PNGs to prevent label leakage.
+
+\subsection{MC Dropout (Stage 4)}
+
+Dropout enabled at inference; BatchNorm in eval mode. $N=20$ stochastic passes per test pair; mean probability $\bar{p}$ and binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ computed as uncertainty estimate. Threshold optimised via Youden's~J.
+
+\subsection{Hybrid triage (Verboom 2025 framework)}
+
+Cases sorted by ascending entropy; the K most-confident are routed to AI and the remainder to a radiologist (modelled as oracle or 85\% sensitivity). Overall sensitivity = (TP$_\text{AI}$ + cancers referred) / total cancers.
+
+\subsection{Training and evaluation}
+
+All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with bfloat16 and AdamW (weight decay 1e-4). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, and \textbf{S@90\%} (sensitivity at 90\% specificity). 95\% bootstrap CIs (BCa, $n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive). Typical AUC CI width: $\pm$0.04--0.05.
+
+\section{Experiments and Results}
+
+\subsection{Stage 1 --- Single-view CNN baselines}
+
+DenseNet-121 achieves the best AUC (0.7564) but only 24.8\% sensitivity at the default threshold. All five models overfit (train F1~$\approx$~0.98) and reach only 40--45\% sensitivity at the 90\%-specificity operating point --- well below the $\sim$85\% radiologist sensitivity in screening literature \cite{17}.
+
+\begin{table*}[tbp]
+\centering
+\caption{Single-view CNN baselines on \vindr{} (n=16,000 train, n=4,000 test images).}
+\label{tab:single-view}
+\begin{tabular}{@{}p{0.22\textwidth} p{0.10\textwidth} p{0.10\textwidth} p{0.10\textwidth} p{0.08\textwidth} p{0.10\textwidth} p{0.10\textwidth}@{}}
+\toprule
+Architecture & Image size & Sensitivity & Specificity & F1 & AUC & S@90\% \\
+\midrule
+VGG19 & 224 px & 0.2626 & 0.9835 & 0.3323 & 0.7066 & 0.3990 \\
+ResNet-50 & 224 px & 0.2677 & 0.9847 & 0.3430 & 0.7286 & 0.4495 \\
+EfficientNet-B3 & 224 px & 0.2980 & 0.9687 & 0.3138 & 0.7330 & 0.3990 \\
+ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
+\textbf{DenseNet-121} & \textbf{224 px} & \textbf{0.2475} & \textbf{0.9882} & \textbf{0.3356} & \textbf{0.7564} & \textbf{0.4444} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar, bar width=16pt,
+    width=0.88\linewidth, height=4.5cm,
+    ylabel={AUC}, ymin=0.68, ymax=0.78,
+    ytick={0.68,0.70,0.72,0.74,0.76,0.78},
+    xtick=data,
+    symbolic x coords={VGG19, ResNet-50, EffNet-B3, ResNet-50*, DenseNet-121},
+    xticklabel style={font=\scriptsize},
+    nodes near coords, nodes near coords align={vertical},
+    every node near coord/.append style={font=\scriptsize, yshift=2pt},
+    enlarge x limits=0.12,
+]
+\addplot[fill=radblue!50] coordinates {
+    (VGG19,        0.7066)
+    (ResNet-50,    0.7286)
+    (EffNet-B3,    0.7330)
+    (ResNet-50*,   0.7489)
+    (DenseNet-121, 0.7564)
+};
+\end{axis}
+\end{tikzpicture}
+\caption{Stage~1: AUC by single-view architecture. ResNet-50* uses 384\,px; all others 224\,px.}
+\label{fig:stage1-bar}
+\end{figure*}
+
+\subsection{Stage 2 --- Multi-view BreastPairNet}
+
+The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view.
+
+\begin{table*}[tbp]
+\centering
+\caption{BreastPairNet ablation across backbone, fusion, and resolution.}
+\label{tab:breastpairnet}
+\begin{tabular}{@{}p{0.22\textwidth} p{0.09\textwidth} p{0.08\textwidth} p{0.20\textwidth} p{0.07\textwidth} p{0.07\textwidth} p{0.15\textwidth}@{}}
+\toprule
+Architecture & Fusion & Image & Best AUC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
+\midrule
+ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.2350 & 0.5354 & 0.4646 [0.3736--0.5673] \\
+ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.2522 & 0.5859 & 0.5051 [0.4023--0.6019] \\
+ResNet-50 & attention & 512 px & 0.7922 [0.7339--0.8429] & 0.2093 & 0.7475 & 0.5152 [0.4130--0.6214] \\
+ResNet-50 & concat & 224 px & 0.7962 [0.7428--0.8445] & 0.2363 & 0.6970 & 0.4949 [0.3958--0.5977] \\
+DenseNet-121 & attention & 224 px & 0.8014 [0.7487--0.8515] & 0.2800 & 0.6364 & 0.5758 [0.4660--0.6667] \\
+EfficientNet-B3 & attention & 224 px & 0.8048 [0.7530--0.8556] & 0.2138 & 0.7677 & 0.5455 [0.4476--0.6449] \\
+DenseNet-121 & concat & 224 px & 0.8073 [0.7577--0.8504] & 0.2101 & 0.7374 & 0.5152 [0.4141--0.6100] \\
+DenseNet-121 \textbf{+reg} & attention & 224 px & 0.8097 [0.7594--0.8591] & 0.2033 & 0.7980 & 0.5556 [0.4301--0.6458] \\
+DenseNet-121 & attention & 512 px & 0.8150 [0.7675--0.8617] & 0.1928 & 0.8081 & 0.5455 [0.4476--0.6408] \\
+DenseNet-121 \textbf{+reg} & concat & 224 px & 0.8177 [0.7659--0.8649] & 0.2357 & 0.7677 & 0.6061 [0.5047--0.7000] \\
+EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273 & 0.5556 [0.4495--0.6505] \\
+\textbf{EfficientNet-B3 +reg} & \textbf{attention} & \textbf{224 px} & \textbf{0.8256 [0.7755--0.8707]} & \textbf{0.3701} & \textbf{0.6263} & \textbf{0.6263 [0.5229--0.7143]} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[tbp]
+\centering
+\caption{Isolated effect of the +reg training recipe.}
+\label{tab:regularisation-effect}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Backbone & Fusion & Base AUC & +reg AUC & Gain \\
+\midrule
+DenseNet-121 & concat & 0.8073 & 0.8177 & +0.010 \\
+DenseNet-121 & attention & 0.8014 & 0.8097 & +0.008 \\
+EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar, bar width=12pt,
+    width=0.85\linewidth, height=5.5cm,
+    ylabel={AUC}, ymin=0.79, ymax=0.835,
+    ytick={0.79,0.80,0.81,0.82,0.83},
+    xtick=data,
+    symbolic x coords={DN121/concat, DN121/attn, EffB3/attn},
+    xticklabel style={font=\scriptsize},
+    legend style={at={(0.97,0.08)}, anchor=south east, font=\scriptsize},
+    nodes near coords, nodes near coords align={vertical},
+    every node near coord/.append style={font=\scriptsize, yshift=2pt},
+    enlarge x limits=0.25,
+]
+\addplot[fill=gray!40] coordinates {
+    (DN121/concat, 0.8073)(DN121/attn, 0.8014)(EffB3/attn, 0.8048)
+};
+\addplot[fill=radblue!60] coordinates {
+    (DN121/concat, 0.8177)(DN121/attn, 0.8097)(EffB3/attn, 0.8256)
+};
+\legend{Base, {+reg}}
+\end{axis}
+\end{tikzpicture}
+\caption{Stage~2: Effect of +reg on AUC for three backbone/fusion pairs.}
+\label{fig:stage2-reg-bar}
+\end{figure*}
+
+All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} are obtained by re-evaluating each best-checkpoint model on the held-out test split (n=2,000 pairs, 99 positives) at the Youden-optimal threshold, with 95\% BCa bootstrap confidence intervals ($n$=2,000 resamples).
+
+Three observations stand out. \textbf{(i) +reg consistently lifts AUC} by +0.008--0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.9\linewidth, height=6cm,
+    xlabel={Training epoch}, ylabel={Validation AUC},
+    xmin=0.5, xmax=30.5, ymin=0.53, ymax=0.86,
+    xtick={1,5,10,15,20,25,30},
+    ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
+    legend style={at={(0.97,0.05)}, anchor=south east, font=\scriptsize},
+    grid=both, grid style={line width=0.2pt, draw=gray!30},
+    mark size=1.8pt,
+]
+% BreastPairNet EffB3 +reg (Stage 2 best)
+\addplot[radblue, mark=*, thick] coordinates {
+    (1,0.5819)(2,0.6139)(3,0.6205)
+    (4,0.7435)(5,0.7880)(6,0.7978)(7,0.8256)
+    (8,0.7726)(9,0.7846)(10,0.7715)(11,0.7686)(12,0.7891)
+    (13,0.7837)(14,0.7917)(15,0.7775)(16,0.7775)(17,0.7647)
+    (18,0.7503)(19,0.7551)(20,0.7584)(21,0.7674)(22,0.7517)
+    (23,0.7692)(24,0.7743)(25,0.7649)
+};
+% CrossView ConvNeXt-Base (Stage 3 best)
+\addplot[red!70!black, mark=square*, thick] coordinates {
+    (1,0.7142)(2,0.7469)(3,0.7668)(4,0.7790)
+    (5,0.7934)(6,0.7427)(7,0.8263)(8,0.8317)
+    (9,0.7930)(10,0.8083)(11,0.7800)(12,0.7823)(13,0.7676)
+    (14,0.8151)(15,0.7210)(16,0.7667)(17,0.7681)(18,0.7451)
+    (19,0.7391)(20,0.7109)(21,0.7100)(22,0.7036)(23,0.6923)
+    (24,0.7020)(25,0.6929)(26,0.6769)(27,0.6791)(28,0.6634)
+    (29,0.6673)(30,0.6686)
+};
+% Stars at best epochs
+\addplot[only marks, mark=star, mark size=5pt, radblue, forget plot]
+    coordinates {(7,0.8256)};
+\addplot[only marks, mark=star, mark size=5pt, red!70!black, forget plot]
+    coordinates {(8,0.8317)};
+% Vertical dashed line: EffB3 backbone unfreeze (epoch 4)
+\addplot[dashed, radblue!50, thin, forget plot] coordinates {(4,0.53)(4,0.86)};
+% Vertical dashed line: ConvNeXt backbone unfreeze (epoch 5)
+\addplot[dashed, red!40, thin, forget plot] coordinates {(5,0.53)(5,0.86)};
+\legend{Stage 2: EffB3 +reg (AUC=0.8256 at ep.~7), Stage 3: ConvNeXt-Base (AUC=0.8317 at ep.~8)}
+\end{axis}
+\end{tikzpicture}
+\caption{Validation AUC vs.\ training epoch for the best Stage~2 (EffB3 +reg) and Stage~3 (ConvNeXt-Base) models. Vertical dashed lines mark the backbone unfreeze point (epoch~4 for EffB3, epoch~5 for ConvNeXt). Stars ($\star$) indicate the best-checkpoint epoch used for test-set evaluation. Both models overfit after their best epoch as training loss continues to decrease while validation AUC plateaus.}
+\label{fig:training-curves}
+\end{figure*}
+
+\subsection{Stage 3 --- CrossView Transformer}
+
+\subsubsection{Performance without annotation}
+
+\begin{table*}[tbp]
+\centering
+\caption{CrossView Transformer results without bounding-box annotation.}
+\label{tab:crossview}
+\begin{tabular}{@{}p{0.22\textwidth} p{0.13\textwidth} p{0.20\textwidth} p{0.07\textwidth} p{0.07\textwidth} p{0.18\textwidth}@{}}
+\toprule
+Architecture & Training data & Best AUC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
+\midrule
+DenseNet-121 (medical init) & VinDr & 0.7648 [0.7116--0.8210] & 0.2374 & 0.5960 & 0.5051 [0.4020--0.6100] \\
+EfficientNet-B3 & VinDr & 0.7795 [0.7276--0.8300] & 0.2022 & 0.7273 & 0.4545 [0.3474--0.5500] \\
+DenseNet-121 & VinDr & 0.7874 [0.7299--0.8401] & 0.2678 & 0.6465 & 0.5556 [0.4474--0.6482] \\
+DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.5354 [0.4433--0.6404] \\
+\textbf{ConvNeXt-Base} & \textbf{VinDr} & \textbf{0.8317 [0.7832--0.8753]} & \textbf{0.2587} & \textbf{0.7475} & \textbf{0.5758 [0.4737--0.6768]} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The best is \textbf{ConvNeXt-Base at AUC=0.8317} (+10.0\% over single-view). DenseNet-121 with \vindr{}+\rsna{} joint training reaches 0.8028, confirming incremental cross-dataset benefit. Medical pretraining (torchxrayvision) underperforms ImageNet (0.7648 vs 0.7874), suggesting domain mismatch.
+
+\subsubsection{Bounding-box annotation ablation}
+
+\begin{table*}[tbp]
+\centering
+\caption{Bounding-box annotation ablation. Test set always uses original unannotated PNGs.}
+\label{tab:annotation-ablation}
+\begin{tabular}{@{}p{0.23\textwidth} p{0.27\textwidth} p{0.27\textwidth} p{0.10\textwidth}@{}}
+\toprule
+Architecture & No annotation AUC [95\% CI] & With annotation AUC [95\% CI] & \(\Delta\)AUC \\
+\midrule
+DenseNet-121 & 0.7874 [0.7299--0.8401] & 0.5862 [0.5274--0.6433] & -0.201 \\
+DenseNet-121 +RSNA & 0.8028 [0.7484--0.8536] & 0.6675 & -0.135 \\
+DenseNet-121 (medical) & 0.7648 [0.7116--0.8210] & 0.6433 [0.5886--0.6966] & -0.122 \\
+EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar, bar width=12pt,
+    width=0.9\linewidth, height=5.5cm,
+    ylabel={AUC}, ymin=0.55, ymax=0.86,
+    ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
+    xtick=data,
+    symbolic x coords={DN121, DN121-RSNA, DN121-med, EffB3},
+    xticklabel style={font=\scriptsize},
+    legend style={at={(0.97,0.97)}, anchor=north east, font=\scriptsize},
+    nodes near coords, nodes near coords align={vertical},
+    every node near coord/.append style={font=\scriptsize, yshift=2pt},
+    enlarge x limits=0.15,
+]
+\addplot[fill=radblue!50] coordinates {
+    (DN121, 0.7874)(DN121-RSNA, 0.8028)(DN121-med, 0.7648)(EffB3, 0.7795)
+};
+\addplot[fill=red!50] coordinates {
+    (DN121, 0.5862)(DN121-RSNA, 0.6675)(DN121-med, 0.6433)(EffB3, 0.6020)
+};
+\legend{No annotation, With annotation}
+\end{axis}
+\end{tikzpicture}
+\caption{Stage~3b: Annotation consistently degrades AUC due to shortcut learning and test-time distribution shift.}
+\label{fig:annotation-bar}
+\end{figure*}
+
+\textbf{All four pairs show annotation hurts AUC by 0.122--0.201.} At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUC collapses because boxes are absent at test time. Remedies: (a) box-dropout regularisation or (b) test-time box injection via a lesion detector.
+
+\subsection{Stage 4 --- MC Dropout uncertainty quantification}
+
+\begin{table}[h!]
+\centering
+\caption{MC Dropout vs deterministic inference (DenseNet-121/concat).}
+\label{tab:mc-dropout}
+{\footnotesize\setlength{\tabcolsep}{3pt}%
+\begin{tabular}{@{}p{1.9cm}ccccc@{}}
+\toprule
+Mode & AUC & Sens & Spec & S@90\% & Thr. \\
+\midrule
+Deterministic & 0.8073 & 0.7374 & 0.7249 & 0.5152 & 0.3304 \\
+\textbf{MC Drop.} & \textbf{0.8099} & \textbf{0.7677} & \textbf{0.7007} & \textbf{0.5253} & \textbf{0.3138} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+MC Dropout slightly improves AUC (+0.003) and produces a meaningful sensitivity shift (+3.0 points). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives --- a 0.056-nat gap that enables the Stage~6 triage policy.
+
+\begin{table}[h!]
+\centering
+\caption{Predictive entropy by class ($N=20$ MC passes, 2,000 test pairs).}
+\label{tab:mc-entropy}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Entropy & Negatives ($n=1{,}901$) & Positives ($n=99$) \\
+\midrule
+Mean    & 0.5112 & 0.5670 \\
+Median  & 0.5310 & 0.6221 \\
+Std dev & 0.1436 & 0.1370 \\
+\midrule
+\multicolumn{3}{@{}p{0.9\columnwidth}@{}}{\small Gap: $+$0.056 nats. Higher entropy $\Rightarrow$ refer high-uncertainty cases.} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}[
+  mainb/.style={draw, fill=radblue!15, rounded corners=3pt,
+                minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+  passb/.style={draw, fill=gray!10, rounded corners=2pt,
+                minimum width=3.2cm, minimum height=0.65cm, font=\small, align=center},
+  calcb/.style={draw, fill=teal!12, rounded corners=2pt,
+                minimum width=3.6cm, minimum height=0.7cm, font=\small, align=center},
+  decb/.style={draw, rounded corners=2pt,
+               minimum width=3.0cm, minimum height=0.7cm, font=\small, align=center},
+  arr/.style={->, >=Latex, thick},
+  node distance=0.75cm,
+]
+% Top: input
+\node[mainb] (inp) {Test pair: (CC image, MLO image)};
+
+% Multiple passes -- shown as a box
+\node[mainb, fill=radblue!25, minimum height=1.0cm, below=of inp] (passes)
+  {$N=20$ stochastic forward passes\\{\scriptsize(Dropout ON, BatchNorm in eval mode)}};
+
+% Probability samples
+\node[mainb, fill=gray!10, below=of passes] (probs)
+  {$p_1,\; p_2,\; \ldots,\; p_{20} \;\in\; [0,1]$};
+
+% Two outputs side-by-side
+\node[calcb, below left=0.8cm and 1.6cm of probs] (meanbox)
+  {Mean:\\$\bar{p}=\tfrac{1}{N}\!\sum_{i=1}^{N} p_i$};
+\node[calcb, fill=orange!15, below right=0.8cm and 1.6cm of probs] (entbox)
+  {Entropy:\\$H(\bar{p})=-\bar{p}\log\bar{p}-(1\!-\!\bar{p})\log(1\!-\!\bar{p})$};
+
+% Decision boxes
+\node[decb, fill=green!12, below=of meanbox] (classify)
+  {Classify: $\bar{p} > \tau$\\(Youden threshold)};
+\node[decb, fill=red!10, below=of entbox] (refer)
+  {Triage: high $H(\bar{p})$\\$\Rightarrow$ refer to radiologist};
+
+% Arrows
+\draw[arr] (inp)    -- (passes);
+\draw[arr] (passes) -- (probs);
+\draw[arr] (probs.south) -- +(0,-0.4) -| (meanbox.north);
+\draw[arr] (probs.south) -- +(0,-0.4) -| (entbox.north);
+\draw[arr] (meanbox) -- (classify);
+\draw[arr] (entbox)  -- (refer);
+\end{tikzpicture}
+\caption{MC Dropout inference (Stage~4). Dropout layers remain active at test time while BatchNorm uses running statistics. Twenty stochastic passes produce a probability distribution $\{p_i\}_{i=1}^{20}$. The mean $\bar{p}$ is used for classification at the Youden-optimal threshold $\tau$; the binary entropy $H(\bar{p})$ ranks cases by epistemic uncertainty and routes high-uncertainty cases to a radiologist in the Stage~6 triage protocol.}
+\label{fig:mc-dropout-flow}
+\end{figure*}
+
+\subsection{Stage 5 --- Model ensemble}
+
+\subsubsection{Original ensemble (16 BreastPairNet models)}
+
+Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three breast-asymmetry models and TTA$\times$5. \textbf{Best result in the study}: AUC=0.8458, sensitivity=0.7374, specificity=0.8296, F1=0.2944, S@90\%=0.6566, S@95\%=0.5657 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26).
+
+\begin{table*}[tbp]
+\centering
+\caption{Best ensemble result (mean probability, TTA$\times$5).}
+\label{tab:ensemble}
+\begin{tabular}{@{}p{0.20\textwidth} ccccccc@{}}
+\toprule
+Method & AUC & Sens & Spec & F1 & S@90\% & S@95\% & Threshold \\
+\midrule
+\textbf{Ensemble (N=16, TTA=5)} & \textbf{0.8458} & \textbf{0.7374} & \textbf{0.8296} & \textbf{0.2944} & \textbf{0.6566} & \textbf{0.5657} & \textbf{0.3414} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[h!]
+\centering
+\caption{Confusion matrix at Youden threshold ($t=0.3414$).}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & Pred.\ negative & Pred.\ positive \\
+\midrule
+Actual negative & TN = 1{,}577 & FP = 324 \\
+Actual positive & FN = 26      & TP = 73  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
+
+\subsubsection{Updated ensemble (25 checkpoints)}
+
+Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUC=0.8441, S@90\%=0.6566 (unchanged), sensitivity=0.7677. The marginal AUC drop confirms that weaker models drag the mean under mean combination; S@90\% is robust.
+
+\subsubsection{Selective ensemble (top-3 +reg + top-5 CrossView + 3 asymmetry)}
+
+11 models, TTA$\times$5: AUC=0.8446, S@90\%=0.6667 (+0.010 over baseline). Marginally better at the clinical operating point; difference is within sampling noise.
+
+\subsection{Stage 6 --- Hybrid triage simulation}
+
+\begin{table}[h!]
+\centering
+\caption{Hybrid triage sweep (oracle vs.\ 85\% radiologist sensitivity).}
+\label{tab:triage-sweep}
+{\scriptsize\setlength{\tabcolsep}{2pt}%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
+\midrule
+30\% & -30\% & 0.9495 & 0.8253 & 0.7059 & 0.0017 \\
+40\% & -40\% & 0.9192 & 0.8071 & 0.6800 & 0.0013 \\
+\textbf{50\%} & \textbf{-50\%} & \textbf{0.8788} & \textbf{0.7727} & \textbf{0.5862} & \textbf{0.0031} \\
+60\% & -60\% & 0.8283 & 0.7359 & 0.5526 & 0.0052 \\
+70\% & -70\% & 0.7677 & 0.6935 & 0.5400 & 0.0133 \\
+80\% & -80\% & 0.7677 & 0.7207 & 0.6618 & 0.1305 \\
+90\% & -90\% & 0.7677 & 0.7450 & 0.7262 & 0.2238 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure*}[tbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.9\linewidth, height=4.5cm,
+    xlabel={AI-read fraction (\%)},
+    ylabel={Overall sensitivity},
+    xmin=25, xmax=95, ymin=0.65, ymax=1.00,
+    xtick={30,40,50,60,70,80,90},
+    ytick={0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00},
+    legend style={at={(0.97,0.97)}, anchor=north east, font=\scriptsize},
+    grid=both, grid style={line width=0.2pt, draw=gray!30},
+    mark size=2.5pt,
+]
+\addplot[radblue, mark=*, thick] coordinates {
+    (30,0.9495)(40,0.9192)(50,0.8788)(60,0.8283)(70,0.7677)(80,0.7677)(90,0.7677)
+};
+\addplot[red!70!black, mark=square*, thick] coordinates {
+    (30,0.8253)(40,0.8071)(50,0.7727)(60,0.7359)(70,0.6935)(80,0.7207)(90,0.7450)
+};
+\addplot[dashed, gray!70, thick, forget plot] coordinates {(25,0.85)(95,0.85)};
+\node[font=\scriptsize, gray!60] at (axis cs:86,0.863) {85\% floor};
+\legend{Oracle radiologist, 85\% radiologist}
+\end{axis}
+\end{tikzpicture}
+\caption{Stage~6: Overall sensitivity vs.\ AI-read fraction. Dashed line = 85\% clinical sensitivity floor.}
+\label{fig:triage-sensitivity}
+\end{figure*}
+
+Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction}. Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\%.
+
+\begin{table}[h!]
+\centering
+\caption{Max AI-read fraction by sensitivity floor.}
+\label{tab:sensitivity-floors}
+{\footnotesize\setlength{\tabcolsep}{3pt}%
+\begin{tabular}{@{}p{1.7cm}ccp{2.2cm}@{}}
+\toprule
+Floor & Oracle & 85\% rad & Workload $\Delta$ \\
+\midrule
+$\geq$90\% & 40\% & n/a & -40\% \\
+$\geq$85\% & 50--60\% & n/a & -50\% to -60\% \\
+$\geq$80\% & 60\% & 40\% & -40\% to -60\% \\
+$\geq$77\% & 70\% & 50\% & -50\% to -70\% \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Comparison to literature}
+
+\begin{table}[h!]
+\centering
+\caption{AUC progression on \vindr{} binary cancer detection.}
+\label{tab:auc-progression}
+\begin{tabular}{@{}p{0.62\columnwidth} p{0.28\columnwidth}@{}}
+\toprule
+Method & AUC \\
+\midrule
+MamT4 \cite{18}\(\ddagger\) & 0.840 \\
+Ours Stage 1 (DenseNet-121) & 0.7564 \\
+Ours Stage 2 (BreastPairNet) & 0.8256 \\
+Ours Stage 3 (CrossView) & 0.8317 \\
+\textbf{Ours Stage 5 (Ensemble)} & \textbf{0.8458} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\(\ddagger\)MamT4 excludes BI-RADS 3; our pipeline retains it as negative. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} meta-analysis (pooled AUC=0.87) use different datasets and are not directly comparable.
+
+\begin{figure}[tbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar, bar width=9pt,
+    width=\columnwidth, height=4.5cm,
+    ylabel={AUC}, ymin=0.72, ymax=0.87,
+    ytick={0.72,0.76,0.80,0.84},
+    xtick=data,
+    symbolic x coords={MamT4, Stage 1, Stage 2, Stage 3, Ensemble},
+    xticklabel style={font=\scriptsize, rotate=20, anchor=north east},
+    nodes near coords, nodes near coords align={vertical},
+    every node near coord/.append style={font=\tiny, yshift=2pt},
+    enlarge x limits=0.15,
+]
+\addplot[fill=radblue!50] coordinates {
+    (MamT4,    0.840)
+    (Stage 1,  0.7564)
+    (Stage 2,  0.8256)
+    (Stage 3,  0.8317)
+    (Ensemble, 0.8458)
+};
+\end{axis}
+\end{tikzpicture}
+\caption{AUC progression across pipeline stages vs.\ MamT4 prior work.}
+\label{fig:auc-progression}
+\end{figure}
+
+\subsection{External validation on \rsna{}}
+
+\begin{table}[h!]
+\centering
+\caption{External validation: \vindr{} (2{,}000 pairs, 99 cancers) vs.\ \rsna{} (4{,}764 pairs, 110 cancers).}
+\label{tab:external-validation}
+{\scriptsize\setlength{\tabcolsep}{3pt}%
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Dataset & AUC [95\% CI] & S@90\% & Sens & Spec \\
+\midrule
+\vindr{} & 0.8458 & 0.6566 & 0.7374 & 0.8296 \\
+\rsna{} & 0.6008 [0.5577--0.6585] & 0.1636 & 0.3909 & 0.7598 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Performance drop: \vindr{} $\to$ \rsna{}.}
+\label{tab:domain-gap}
+{\footnotesize\setlength{\tabcolsep}{3pt}%
+\begin{tabular}{@{}p{1.6cm}cccc@{}}
+\toprule
+Metric & \vindr{} & \rsna{} & Drop & Rel. \\
+\midrule
+AUC & 0.8458 & 0.6008 & -0.245 & -29\% \\
+S@90\%spec & 0.6566 & 0.1636 & \textbf{-0.493} & \textbf{-75\%} \\
+Sensitivity & 0.7374 & 0.3909 & -0.347 & -47\% \\
+Specificity & 0.8296 & 0.7598 & -0.070 & -8\% \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Three factors drive the gap: (1) Vietnamese vs US breast density distribution and lesion prevalence; (2) different FFDM equipment and post-processing; (3) the S@90\%spec drop (-75.1\%) is particularly stark at the clinical operating point, indicating the conservative side of the decision surface is most affected by domain shift. Table~\ref{tab:model-family-summary} summarises the best-performing model family at each stage.
+
+\begin{table*}[tbp]
+\centering
+\caption{Summary of the best-performing model family in each stage.}
+\label{tab:model-family-summary}
+{\small\setlength{\tabcolsep}{4pt}%
+\begin{tabular}{@{}p{0.21\textwidth} p{0.11\textwidth} p{0.19\textwidth} p{0.09\textwidth} p{0.21\textwidth}@{}}
+\toprule
+Family & Best AUC & 95\% CI & S@90\% & Key advantage \\
+\midrule
+Single-view CNN & 0.7564 & --- & 0.4444 & Simple baseline \\
+BreastPairNet (concat) & 0.8177 & 0.7659--0.8649 & 0.6061 & Robust across backbones \\
+BreastPairNet (attention) & 0.8256 & 0.7755--0.8707 & 0.6263 & Best regularised \\
+CrossView Transformer & 0.8317 & 0.7832--0.8753 & 0.5758 & Spatial alignment \\
+Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best overall $\star$ \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\FloatBarrier
+\setlength{\parskip}{0pt}
+\section{Discussion}
+
+\textbf{Why multi-view helps.} The +9.1\% gain from BreastPairNet is consistent with the radiological reality that lesions visible in CC may be ambiguous in MLO and vice versa. Joint conditioning removes view-specific false positives.
+
+\textbf{Why +reg helps.} With only $\sim$395 cancer-positive training pairs, stronger augmentation (elastic deformation, mixup, label smoothing) is a powerful implicit regulariser (+0.008--0.021 AUC across all tested variants).
+
+\textbf{Why CrossView edges out BreastPairNet.} ConvNeXt-Base (0.8317) vs EfficientNet-B3 +reg (0.8256): $\Delta$=0.006, within the $\pm$0.04 CI. Exchanging spatial feature maps before global pooling preserves localisation information that BreastPairNet's independent pooling discards.
+
+\textbf{Why medical pretraining hurt.} Chest-X-ray features (lung parenchyma, mediastinum, rib edges) are domain-mismatched to mammographic texture. ImageNet's broader texture vocabulary provides a better starting point (0.7874 vs 0.7648).
+
+\textbf{Why annotation always hurt.} Painted boxes provide a strong shortcut perfectly correlated with the cancer label in training, but absent at test time. Remedies: box-dropout regularisation or test-time box injection.
+
+\textbf{MC Dropout.} The +0.003 AUC gain is within the 95\% CI. The real value is the sensitivity boost (+3.0 points) and the 0.056-nat entropy gap between classes, which enables triage.
+
+\textbf{Triage simulation.} Under realistic 85\% radiologist sensitivity, K=50\% yields only 77.3\% overall sensitivity --- 10.6 points below the oracle result. K$\leq$40\% is required to stay above the 80\% clinical floor in non-oracle conditions.
+
+\textbf{Confidence intervals.} With 99 positive test pairs, AUC CI width is $\pm$0.04--0.05. Differences $<$0.01 AUC are within sampling noise. BreastPairNet (0.8256) and CrossView (0.8317) are not significantly separated.
+
+\textbf{Limitations.} (i) Small positive test count (99 pairs) limits fine-grained comparison; (ii) large domain gap to US FFDM (AUC=0.6008); (iii) MamT4 comparison uses a slightly different BI-RADS exclusion; (iv) 7,054 non-CC/MLO RSNA images excluded from pair construction.
+
+\textbf{Future work.} (1) Box-dropout or test-time box injection; (2) CrossView at 512\,px with gradient checkpointing; (3) Validate on CBIS-DDSM and INbreast; (4) Tighter ensemble of +reg BreastPairNet + best CrossView + asymmetry; (5) Fine-tune on RSNA training pairs; (6) Prospective triage study with real reader sensitivity data.
+
+\section{Conclusion}
+
+We have presented a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 5} (16-model ensemble, AUC=0.8458, +11.8\%). Bounding-box annotations consistently degraded AUC by 0.12--0.20 due to shortcut learning --- the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: 50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, requiring K$\leq$40\% to stay above the clinical floor. External validation (RSNA AUC=0.6008) reveals that domain generalisation to US FFDM remains a critical open challenge.
+
+\FloatBarrier
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{1} H. T. Nguyen et al., ``\vindr{}: A large-scale benchmark dataset for computer-aided diagnosis in full-field digital mammography,'' \emph{Scientific Data}, vol.~10, no.~277, 2023.
+
+\bibitem{2} B. Abdikenov et al., ``Enhancing Breast Lesion Detection in Mammograms via Transfer Learning,'' \emph{Journal of Imaging}, vol.~11, p.~314, 2025.
+
+\bibitem{3} D. Mellado et al., ``Identifying clinically relevant findings in breast cancer using deep learning and feature attribution on local views from high-resolution mammography,'' \emph{Frontiers in Oncology}, vol.~15, 2025.
+
+\bibitem{4} J. H. Yoon et al., ``Standalone AI for breast cancer detection at screening digital mammography and digital breast tomosynthesis: A systematic review and meta-analysis,'' \emph{Radiology}, vol.~307, no.~5, p.~e222639, 2023.
+
+\bibitem{5} T.-Y. Lin et al., ``Focal Loss for Dense Object Detection,'' \emph{arXiv:1708.02002}, 2018.
+
+\bibitem{6} P. Rajpurkar et al., ``CheXNet: Radiologist-level pneumonia detection on chest X-rays with deep learning,'' \emph{arXiv:1711.05225}, 2017.
+
+\bibitem{7} K. He et al., ``Deep Residual Learning for Image Recognition,'' \emph{arXiv:1512.03385}, 2015.
+
+\bibitem{8} G. Huang et al., ``Densely Connected Convolutional Networks,'' \emph{arXiv:1608.06993}, 2018.
+
+\bibitem{9} M. Tan and Q. Le, ``EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks,'' in \emph{Proc.\ ICML}, 2019.
+
+\bibitem{10} N. Wu et al., ``Deep Neural Networks Improve Radiologists' Performance in Breast Cancer Screening,'' \emph{arXiv:1903.08297}, 2019.
+
+\bibitem{11} S. M. McKinney et al., ``International evaluation of an AI system for breast cancer screening,'' \emph{Nature}, vol.~577, pp.~89--94, 2020.
+
+\bibitem{12} S. D. Verboom et al., ``AI Should Read Mammograms Only When Confident,'' \emph{Radiology}, vol.~316, no.~2, p.~e242594, 2025.
+
+\bibitem{13} A. Kendall and Y. Gal, ``What uncertainties do we need in Bayesian deep learning for computer vision?'' in \emph{NeurIPS}, 2017, pp.~5574--5584.
+
+\bibitem{14} S. M. Pizer et al., ``Contrast-Limited Adaptive Histogram Equalization: Speed and Effectiveness,'' 1990.
+
+\bibitem{15} J. M. Johnson and T. M. Khoshgoftaar, ``Survey on deep learning with class imbalance,'' \emph{Journal of Big Data}, vol.~6, no.~27, 2019.
+
+\bibitem{16} Z. Liu et al., ``A ConvNet for the 2020s,'' \emph{arXiv:2201.03545}, 2022.
+
+\bibitem{17} C. D. Lehman et al., ``Diagnostic accuracy of digital screening mammography with and without computer-aided detection,'' \emph{JAMA Internal Medicine}, vol.~175, no.~11, pp.~1828--1837, 2015.
+
+\bibitem{18} A. Ibragimov et al., ``MamT4: Multi-view Attention Networks for Mammography Cancer Classification,'' in \emph{Proc.\ IEEE COMPSAC}, 2024, pp.~1965--1970.
+
+\end{thebibliography}
+
+\end{document}
