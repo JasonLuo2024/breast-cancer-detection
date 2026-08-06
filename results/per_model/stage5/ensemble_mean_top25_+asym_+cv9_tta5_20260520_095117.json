@@ -1,0 +1,240 @@
+{
+  "method": "ensemble_mean",
+  "n_models": 25,
+  "tta_passes": 5,
+  "include_asymmetry": true,
+  "models": [
+    {
+      "checkpoint": "mv_densenet121_attention_20260508_065619.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.7946
+    },
+    {
+      "checkpoint": "mv_densenet121_attention_20260511_111234.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8138
+    },
+    {
+      "checkpoint": "mv_densenet121_attention_20260511_234921.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 512,
+      "val_auc": 0.8103
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260508_034005.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8026
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260510_061259.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 512,
+      "val_auc": 0.8141
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260511_153143.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8195
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260508_002246.pt",
+      "type": "breastpair",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8077
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260510_120007.pt",
+      "type": "breastpair",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 512,
+      "val_auc": 0.8142
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260511_132127.pt",
+      "type": "breastpair",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8241
+    },
+    {
+      "checkpoint": "mv_resnet50_attention_20260507_203041.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.7847
+    },
+    {
+      "checkpoint": "mv_resnet50_attention_20260512_070113.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "attention",
+      "img_size": 512,
+      "val_auc": 0.7952
+    },
+    {
+      "checkpoint": "mv_resnet50_concat_20260507_185519.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8003
+    },
+    {
+      "checkpoint": "mv_resnet50_concat_20260508_065844.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "concat",
+      "img_size": 384,
+      "val_auc": 0.7438
+    },
+    {
+      "checkpoint": "cv_convnext_base_20260512_180822.pt",
+      "type": "crossview",
+      "arch": "convnext_base",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.8312
+    },
+    {
+      "checkpoint": "cv_densenet121_20260512_133436.pt",
+      "type": "crossview",
+      "arch": "densenet121",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.8005
+    },
+    {
+      "checkpoint": "cv_densenet121_20260514_153710.pt",
+      "type": "crossview",
+      "arch": "densenet121",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.6151
+    },
+    {
+      "checkpoint": "cv_densenet121_med_20260513_005748.pt",
+      "type": "crossview",
+      "arch": "densenet121",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.753
+    },
+    {
+      "checkpoint": "cv_densenet121_med_20260514_230552.pt",
+      "type": "crossview",
+      "arch": "densenet121",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.6089
+    },
+    {
+      "checkpoint": "cv_densenet121_rsna_20260514_074507.pt",
+      "type": "crossview",
+      "arch": "densenet121",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.7712
+    },
+    {
+      "checkpoint": "cv_efficientnet_b3_20260514_144023.pt",
+      "type": "crossview",
+      "arch": "efficientnet_b3",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.7898
+    },
+    {
+      "checkpoint": "cv_efficientnet_b3_20260515_030406.pt",
+      "type": "crossview",
+      "arch": "efficientnet_b3",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.5585
+    },
+    {
+      "checkpoint": "cv_efficientnet_b3_rsna_20260515_183137.pt",
+      "type": "crossview",
+      "arch": "efficientnet_b3",
+      "fusion": "cross-attn",
+      "img_size": 224,
+      "val_auc": 0.591
+    },
+    {
+      "checkpoint": "asymmetry_densenet121_20260509_131045.pt",
+      "type": "asymmetry",
+      "arch": "densenet121",
+      "fusion": null,
+      "img_size": 224,
+      "val_auc": 0.806
+    },
+    {
+      "checkpoint": "asymmetry_efficientnet_b3_20260509_162112.pt",
+      "type": "asymmetry",
+      "arch": "efficientnet_b3",
+      "fusion": null,
+      "img_size": 224,
+      "val_auc": 0.7991
+    },
+    {
+      "checkpoint": "asymmetry_resnet50_20260509_191622.pt",
+      "type": "asymmetry",
+      "arch": "resnet50",
+      "fusion": null,
+      "img_size": 224,
+      "val_auc": 0.7693
+    }
+  ],
+  "ensemble_auc": 0.8441,
+  "final_metrics": {
+    "accuracy": 0.96,
+    "sensitivity": 0.3232,
+    "specificity": 0.9932,
+    "precision": 0.7111,
+    "f1_score": 0.4444,
+    "auc_roc": 0.8441,
+    "sens_at_90pct_spec": 0.6566,
+    "sens_at_95pct_spec": 0.5657,
+    "tp": 32,
+    "tn": 1888,
+    "fp": 13,
+    "fn": 67,
+    "threshold": 0.5
+  },
+  "final_metrics_opt": {
+    "accuracy": 0.806,
+    "sensitivity": 0.7677,
+    "specificity": 0.808,
+    "precision": 0.1723,
+    "f1_score": 0.2815,
+    "auc_roc": 0.8441,
+    "sens_at_90pct_spec": 0.6566,
+    "sens_at_95pct_spec": 0.5657,
+    "tp": 76,
+    "tn": 1536,
+    "fp": 365,
+    "fn": 23,
+    "threshold": 0.3238
+  },
+  "opt_threshold": 0.3238
+}

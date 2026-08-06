@@ -1,0 +1,80 @@
+{
+  "method": "ensemble_mean",
+  "n_models": 6,
+  "models": [
+    {
+      "checkpoint": "mv_densenet121_attention_20260508_065619.pt",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8014
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260508_034005.pt",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8073
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260508_002246.pt",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8048
+    },
+    {
+      "checkpoint": "mv_resnet50_attention_20260507_203041.pt",
+      "arch": "resnet50",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.7847
+    },
+    {
+      "checkpoint": "mv_resnet50_concat_20260507_185519.pt",
+      "arch": "resnet50",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.7962
+    },
+    {
+      "checkpoint": "mv_resnet50_concat_20260508_065844.pt",
+      "arch": "resnet50",
+      "fusion": "concat",
+      "img_size": 384,
+      "val_auc": 0.7467
+    }
+  ],
+  "ensemble_auc": 0.8363,
+  "final_metrics": {
+    "accuracy": 0.9545,
+    "sensitivity": 0.3939,
+    "specificity": 0.9837,
+    "precision": 0.5571,
+    "f1_score": 0.4615,
+    "auc_roc": 0.8363,
+    "sens_at_90pct_spec": 0.6566,
+    "sens_at_95pct_spec": 0.5152,
+    "tp": 39,
+    "tn": 1870,
+    "fp": 31,
+    "fn": 60,
+    "threshold": 0.5
+  },
+  "final_metrics_opt": {
+    "accuracy": 0.8575,
+    "sensitivity": 0.697,
+    "specificity": 0.8659,
+    "precision": 0.213,
+    "f1_score": 0.3262,
+    "auc_roc": 0.8363,
+    "sens_at_90pct_spec": 0.6566,
+    "sens_at_95pct_spec": 0.5152,
+    "tp": 69,
+    "tn": 1646,
+    "fp": 255,
+    "fn": 30,
+    "threshold": 0.3668
+  },
+  "opt_threshold": 0.3668
+}

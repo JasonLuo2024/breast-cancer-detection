@@ -1,0 +1,168 @@
+{
+  "method": "ensemble_mean",
+  "n_models": 16,
+  "tta_passes": 5,
+  "include_asymmetry": true,
+  "models": [
+    {
+      "checkpoint": "mv_densenet121_attention_20260508_065619.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.7946
+    },
+    {
+      "checkpoint": "mv_densenet121_attention_20260511_111234.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8138
+    },
+    {
+      "checkpoint": "mv_densenet121_attention_20260511_234921.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "attention",
+      "img_size": 512,
+      "val_auc": 0.8103
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260508_034005.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8026
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260510_061259.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 512,
+      "val_auc": 0.8141
+    },
+    {
+      "checkpoint": "mv_densenet121_concat_20260511_153143.pt",
+      "type": "breastpair",
+      "arch": "densenet121",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8195
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260508_002246.pt",
+      "type": "breastpair",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8077
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260510_120007.pt",
+      "type": "breastpair",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 512,
+      "val_auc": 0.8142
+    },
+    {
+      "checkpoint": "mv_efficientnet_b3_attention_20260511_132127.pt",
+      "type": "breastpair",
+      "arch": "efficientnet_b3",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.8241
+    },
+    {
+      "checkpoint": "mv_resnet50_attention_20260507_203041.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "attention",
+      "img_size": 224,
+      "val_auc": 0.7847
+    },
+    {
+      "checkpoint": "mv_resnet50_attention_20260512_070113.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "attention",
+      "img_size": 512,
+      "val_auc": 0.7952
+    },
+    {
+      "checkpoint": "mv_resnet50_concat_20260507_185519.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "concat",
+      "img_size": 224,
+      "val_auc": 0.8003
+    },
+    {
+      "checkpoint": "mv_resnet50_concat_20260508_065844.pt",
+      "type": "breastpair",
+      "arch": "resnet50",
+      "fusion": "concat",
+      "img_size": 384,
+      "val_auc": 0.7438
+    },
+    {
+      "checkpoint": "asymmetry_densenet121_20260509_131045.pt",
+      "type": "asymmetry",
+      "arch": "densenet121",
+      "fusion": null,
+      "img_size": 224,
+      "val_auc": 0.806
+    },
+    {
+      "checkpoint": "asymmetry_efficientnet_b3_20260509_162112.pt",
+      "type": "asymmetry",
+      "arch": "efficientnet_b3",
+      "fusion": null,
+      "img_size": 224,
+      "val_auc": 0.7991
+    },
+    {
+      "checkpoint": "asymmetry_resnet50_20260509_191622.pt",
+      "type": "asymmetry",
+      "arch": "resnet50",
+      "fusion": null,
+      "img_size": 224,
+      "val_auc": 0.7693
+    }
+  ],
+  "ensemble_auc": 0.8458,
+  "final_metrics": {
+    "accuracy": 0.9595,
+    "sensitivity": 0.3737,
+    "specificity": 0.99,
+    "precision": 0.6607,
+    "f1_score": 0.4774,
+    "auc_roc": 0.8458,
+    "sens_at_90pct_spec": 0.6566,
+    "sens_at_95pct_spec": 0.5657,
+    "tp": 37,
+    "tn": 1882,
+    "fp": 19,
+    "fn": 62,
+    "threshold": 0.5
+  },
+  "final_metrics_opt": {
+    "accuracy": 0.825,
+    "sensitivity": 0.7374,
+    "specificity": 0.8296,
+    "precision": 0.1839,
+    "f1_score": 0.2944,
+    "auc_roc": 0.8458,
+    "sens_at_90pct_spec": 0.6566,
+    "sens_at_95pct_spec": 0.5657,
+    "tp": 73,
+    "tn": 1577,
+    "fp": 324,
+    "fn": 26,
+    "threshold": 0.3414
+  },
+  "opt_threshold": 0.3414
+}
