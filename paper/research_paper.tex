@@ -67,6 +67,7 @@
 \newcommand{\satninety}{S@90\%spec}
 \newcommand{\vindr}{VinDr-Mammo}
 \newcommand{\rsna}{RSNA 2022}
+\newcommand{\mamnet}{MamNet-6}
 
 \title{\textbf{Multi-View Fusion, CrossView Transformer, and Uncertainty-Aware Triage for Breast Cancer Detection on \vindr}\\[0.4em]
 \large From 0.756 to 0.846 AUC}
@@ -88,7 +89,7 @@
 \textbf{Background:} Breast cancer is the most commonly diagnosed cancer worldwide. Population screening based on full-field digital mammography (FFDM) reduces mortality but imposes heavy radiologist workload and substantial inter-reader variability, motivating computer-aided diagnosis.
 
 \smallskip
-\textbf{Purpose:} To develop and evaluate a six-stage pipeline for breast cancer detection on the \vindr{} FFDM benchmark, progressing from single-view CNN baselines to a multi-view ensemble with uncertainty-aware triage simulation.
+\textbf{Purpose:} To develop and evaluate \mamnet{}, a six-stage pipeline for breast cancer detection on the \vindr{} FFDM benchmark, progressing from single-view CNN baselines to a multi-view ensemble with uncertainty-aware triage simulation.
 
 \smallskip
 \textbf{Materials and Methods:} We trained five single-view CNN backbones (Stage~1), a shared-backbone BreastPairNet multi-view network across twelve backbone$\times$fusion$\times$resolution variants (Stage~2), a CrossView Transformer with spatial cross-attention (Stage~3), and a bounding-box annotation ablation study (Stage~3b). We then applied Monte Carlo (MC) Dropout for uncertainty quantification (Stage~4), assembled a 16-model ensemble with test-time augmentation (TTA) (Stage~5), and evaluated a Verboom-style hybrid triage simulation (Stage~6). External zero-shot validation was performed on the \rsna{} dataset from United States screening programmes.
@@ -100,7 +101,7 @@
 \textbf{Conclusion:} A six-stage multi-view pipeline achieves AUROC=0.8458 on \vindr{}. Bounding-box shortcut learning is a key negative finding; domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains an open challenge.
 \end{tcolorbox}
 \smallskip
-\noindent\textbf{Keywords:} breast cancer detection; mammography; multi-view learning; uncertainty quantification; triage; \vindr{}.
+\noindent\textbf{Keywords:} breast cancer detection; mammography; \mamnet{}; multi-view learning; uncertainty quantification; triage; \vindr{}.
 \vspace{1.2em}
 }]
 
@@ -153,7 +154,7 @@ This paper makes seven contributions. First, we present a systematic comparison 
 \textbf{Stage 5:} 16-model ensemble with asymmetry features and TTA, best \(\auc=0.8458\).\\
 \textbf{Stage 6:} hybrid triage simulation and external \rsna{} validation.
 \end{minipage}}
-\caption{Overview of the six-stage breast cancer detection pipeline.}
+\caption{\mamnet{}: overview of the six-stage breast cancer detection pipeline.}
 \label{fig:pipeline}
 \end{figure*}
 
@@ -220,6 +221,8 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
                minimum width=1.6cm, minimum height=0.8cm, font=\small\bfseries, align=center},
   netb/.style={draw, fill=radblue!18, rounded corners=3pt,
                minimum width=2.2cm, minimum height=2.4cm, font=\small, align=center},
+  gapb/.style={draw, fill=orange!20, rounded corners=2pt,
+               minimum width=1.4cm, minimum height=0.6cm, font=\tiny\bfseries, align=center},
   featb/.style={draw, fill=gray!13, rounded corners=2pt,
                 minimum width=1.6cm, minimum height=0.65cm, font=\small, align=center},
   fusb/.style={draw, fill=teal!15, rounded corners=3pt,
@@ -241,26 +244,40 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 \draw[<->, dashed, gray!55, >=Latex, thick]
   (cc.south) -- node[right, font=\tiny, gray, align=left] {shared\\weights $\theta$} (mlo.north);
 
+% GAP boxes (explicit, highlighted — this is the key Stage 2 design choice)
+\node[gapb] (gap_cc)  at (5.8,  1.0) {Global\\avg pool};
+\node[gapb] (gap_mlo) at (5.8, -1.0) {Global\\avg pool};
+
+% Dashed region highlighting GAP as the Stage 2 design choice
+\draw[dashed, orange!55, thick, rounded corners=5pt]
+  (5.0, -1.55) rectangle (6.6, 1.55);
+\node[font=\scriptsize, orange!70!black, align=center, text width=3cm] at (5.8, -2.1)
+  {\textbf{Stage~3 replaces here:}\\spatial cross-attention\\before pooling (Fig.~\ref{fig:crossview-arch})};
+
 % Feature vectors
-\node[featb] (fcc)  at (7.2,  1.0) {$\mathbf{f}_{CC}\!\in\!\mathbb{R}^d$};
-\node[featb] (fmlo) at (7.2, -1.0) {$\mathbf{f}_{MLO}\!\in\!\mathbb{R}^d$};
+\node[featb] (fcc)  at (8.5,  1.0) {$\mathbf{f}_{CC}\!\in\!\mathbb{R}^d$};
+\node[featb] (fmlo) at (8.5, -1.0) {$\mathbf{f}_{MLO}\!\in\!\mathbb{R}^d$};
 
 % Fusion head
-\node[fusb] (fus) at (10.2, 0) {Fusion\\head\\(concat\\or attn)};
+\node[fusb] (fus) at (11.2, 0) {Fusion\\head\\(concat\\or attn)};
 
 % MLP
-\node[mlpb] (mlp) at (12.8, 0) {MLP\\+Drop(0.5)};
+\node[mlpb] (mlp) at (13.5, 0) {MLP\\+Drop(0.5)};
 
 % Output
-\node[outb] (out) at (15.0, 0) {$P$(cancer)};
+\node[outb] (out) at (15.5, 0) {$P$(cancer)};
 
 % Arrows: inputs → backbone
 \draw[arr] (cc.east)  to[out=0, in=150] (bb.north west);
 \draw[arr] (mlo.east) to[out=0, in=210] (bb.south west);
 
-% Arrows: backbone → features (split out east, go up/down)
-\draw[arr] (bb.east) -- +(0.8, 0) |- (fcc.west);
-\draw[arr] (bb.east) -- +(0.8, 0) |- (fmlo.west);
+% Arrows: backbone → GAP
+\draw[arr] (bb.east) -- +(0.5, 0) |- (gap_cc.west);
+\draw[arr] (bb.east) -- +(0.5, 0) |- (gap_mlo.west);
+
+% Arrows: GAP → feature vectors
+\draw[arr] (gap_cc.east)  -- (fcc.west);
+\draw[arr] (gap_mlo.east) -- (fmlo.west);
 
 % Arrows: features → fusion
 \draw[arr] (fcc.east)  to[out=0, in=90]  (fus.north);
@@ -270,11 +287,8 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 \draw[arr] (fus.east) -- (mlp.west);
 \draw[arr] (mlp.east) -- (out.west);
 
-% GAP label
-\node[font=\tiny, gray, align=center] at (5.5,  1.45) {global avg\\pool};
-\node[font=\tiny, gray, align=center] at (5.5, -1.45) {global avg\\pool};
 \end{tikzpicture}
-\caption{BreastPairNet architecture (Stage~2). CC and MLO images from the same breast pass through a \emph{shared} CNN backbone (weights $\theta$ are tied for both views, indicated by the dashed arrow). Each view produces a global-average-pooled feature vector; the two vectors are fused by either concatenation (dim $2d$) or learned attention weights, then classified by a two-layer MLP with 50\% dropout.}
+\caption{BreastPairNet architecture (Stage~2 of \mamnet{}). CC and MLO images from the same breast pass through a \emph{shared} CNN backbone (weights $\theta$ tied for both views). Each view is independently reduced to a global-average-pooled (GAP) feature vector $\mathbf{f}\in\mathbb{R}^d$; the two vectors are fused by concatenation or attention, then classified by a two-layer MLP with 50\% dropout. The orange dashed box highlights the GAP step — the key design decision that Stage~3 (CrossView Transformer, \autoref{fig:crossview-arch}) replaces with bidirectional spatial cross-attention applied \emph{before} pooling.}
 \label{fig:breastpairnet-arch}
 \end{figure*}
 
@@ -968,7 +982,7 @@ Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best o
 
 \section{Conclusion}
 
-We have presented a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
+We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
 
 \FloatBarrier
 \newpage
