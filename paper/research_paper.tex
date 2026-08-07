@@ -73,6 +73,8 @@
 \large From 0.756 to 0.846 AUROC}
 \author[1]{Haoming Luo}
 \author[1]{Matthew Hamilton}
+\author[1]{Oscar Meruvia-Pastor}
+\author[1]{Edward Kendall}
 \affil[1]{\small Department of Computer Science, Memorial University, St.\ John's, NL, Canada}
 \date{May 20, 2026}
 
@@ -985,6 +987,14 @@ Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best o
 We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
 
 \FloatBarrier
+
+\section*{Author Contributions}
+
+\noindent\textbf{Haoming Luo:} Software, Formal analysis, Investigation, Visualization, Writing -- original draft.\\
+\textbf{Matthew Hamilton:} Conceptualization, Methodology, Supervision, Writing -- review \& editing.\\
+\textbf{Oscar Meruvia-Pastor:} Supervision, Writing -- review \& editing.\\
+\textbf{Edward Kendall:} Conceptualization, Resources, Data curation, Validation, Supervision, Writing -- review \& editing.
+
 \newpage
 \begin{thebibliography}{99}
 
