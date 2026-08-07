@@ -85,7 +85,7 @@
   left=5pt, right=5pt, top=5pt, bottom=5pt,
   before upper={\small},
 ]
-\textbf{Background:} Breast cancer is the most commonly diagnosed cancer worldwide. Population screening based on full-field digital mammography (FFDM) reduces mortality but imposes heavy radiologist workload and substantial inter-reader variability, motivating computer-aided diagnosis (CAD).
+\textbf{Background:} Breast cancer is the most commonly diagnosed cancer worldwide. Population screening based on full-field digital mammography (FFDM) reduces mortality but imposes heavy radiologist workload and substantial inter-reader variability, motivating computer-aided diagnosis.
 
 \smallskip
 \textbf{Purpose:} To develop and evaluate a six-stage pipeline for breast cancer detection on the \vindr{} FFDM benchmark, progressing from single-view CNN baselines to a multi-view ensemble with uncertainty-aware triage simulation.
@@ -129,7 +129,7 @@ Sensitivity at 90\% specificity (\satninety{}) on \vindr{}: \textbf{0.6566} (bes
 
 \section{Introduction}
 
-\lettrine[lines=2, lraise=0.1]{B}{reast} cancer is the most commonly diagnosed cancer worldwide and a leading cause of cancer-related death in women \cite{4}. Population screening programmes based on full-field digital mammography (FFDM) have repeatedly been shown to reduce breast-cancer mortality, yet they impose a heavy operational burden: in many countries each screening exam is double-read by two radiologists, and reader sensitivity varies by 10--30 percentage points between individuals \cite{10,11}. False-negative rates of 10--30\% and false-positive recall rates of approximately 8\% are well documented across both clinical practice and large computer-aided diagnosis (CAD) literature, with the historical, hand-engineered CAD systems failing to deliver measurable benefit in routine screening \cite{17}.
+\lettrine[lines=2, lraise=0.1]{B}{reast} cancer is the most commonly diagnosed cancer worldwide and a leading cause of cancer-related death in women \cite{4}. Population screening programmes based on full-field digital mammography (FFDM) have repeatedly been shown to reduce breast-cancer mortality, yet they impose a heavy operational burden: in many countries each screening exam is double-read by two radiologists, and reader sensitivity varies by 10--30 percentage points between individuals \cite{10,11}. False-negative rates of 10--30\% and false-positive recall rates of approximately 8\% are well documented across both clinical practice and large computer-aided diagnosis literature, with historical hand-engineered detection systems failing to deliver measurable benefit in routine screening \cite{17}.
 
 Deep learning has dramatically improved the situation. CNNs trained on hundreds of thousands of exams now reach or exceed individual radiologist AUC on internal and some external cohorts \cite{11}, and meta-analyses report pooled AUC of 0.87 for AI on digital mammography versus 0.81 for radiologists \cite{4}. Three trends are particularly relevant. First, multi-view modelling that fuses the craniocaudal (CC) and mediolateral oblique (MLO) projections improves over single-view inference because findings often appear unambiguously in only one view \cite{10}. Second, transformer-based fusion of views allows feature-level interaction rather than score-level averaging. Third, uncertainty-aware inference via Monte Carlo (MC) Dropout \cite{13} enables a \emph{hybrid triage} protocol in which the AI reads the most-confident exams autonomously and refers the rest to a human reader \cite{12}, reducing radiologist workload by approximately 38\% in retrospective evaluation \cite{12}.
 
@@ -159,7 +159,7 @@ This paper makes seven contributions. First, we present a systematic comparison 
 
 \section{Related Work}
 
-\textbf{Deep CNN backbones.} Residual networks \cite{7} and densely connected networks \cite{8} underpin almost all modern CAD systems. CheXNet \cite{6} established DenseNet-121 as a default starting point for chest imaging. EfficientNet \cite{9} introduced compound scaling (B3: 12M parameters). ConvNeXt \cite{16} modernised pure-convolutional design to transformer-level ImageNet accuracy.
+\textbf{Deep CNN backbones.} Residual networks \cite{7} and densely connected networks \cite{8} underpin almost all modern screening AI systems. CheXNet \cite{6} established DenseNet-121 as a default starting point for chest imaging. EfficientNet \cite{9} introduced compound scaling (B3: 12M parameters). ConvNeXt \cite{16} modernised pure-convolutional design to transformer-level ImageNet accuracy.
 
 \textbf{Multi-view mammography.} Wu et al. \cite{10} trained a four-stream ResNet-22 on 229,426 NYU exams (AUC=0.895), establishing that shared backbones and feature-level aggregation are essential under limited data. McKinney et al. \cite{11} reported AUC=0.889 on UK FFDM, outperforming six radiologists. Cross-view spatial attention outperforms score-level averaging, motivating Stage~3.
 
@@ -358,7 +358,9 @@ Ground-truth boxes (\vindr{}) were drawn as white outlines (40-px line width) on
 
 \subsection{MC Dropout (Stage 4)}
 
-Dropout layers enabled at inference following Kendall and Gal \cite{13}; BatchNorm in eval mode. $N=20$ stochastic passes per test pair; mean probability $\bar{p}$ and binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ computed as uncertainty estimate. The classification threshold is selected by maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the validation set.
+MC Dropout was chosen for uncertainty quantification because it requires no architectural modifications: dropout layers that are normally disabled at test time are kept active, converting a single point prediction into a distribution over outputs without retraining \cite{13}. This makes entropy-based case ranking possible at negligible computational cost.
+
+Concretely, BatchNorm is kept in eval mode while dropout remains active. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is selected by maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the validation set.
 
 \subsection{Hybrid triage (Verboom 2025 framework)}
 
@@ -421,7 +423,7 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 
 \subsection{Stage 2 --- Multi-view BreastPairNet}
 
-The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split.
+The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split. Standard deviations across runs are not reported as each configuration was trained once; the 95\% BCa CIs quantify test-split sampling variability, not run-to-run variability.
 
 \begin{table*}[tbp]
 \centering
@@ -551,9 +553,10 @@ Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:
 \centering
 \caption{CrossView Transformer results without bounding-box annotation.}
 \label{tab:crossview}
-\begin{tabular}{@{}p{0.22\textwidth} p{0.13\textwidth} p{0.20\textwidth} p{0.07\textwidth} p{0.07\textwidth} p{0.18\textwidth}@{}}
+{\small\setlength{\tabcolsep}{4pt}%
+\begin{tabular}{@{}p{0.21\textwidth} p{0.11\textwidth} p{0.22\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.21\textwidth}@{}}
 \toprule
-Architecture & Training data & Best AUC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
+Architecture & Training data & Best AUROC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
 \midrule
 DenseNet-121 (medical init) & VinDr & 0.7648 [0.7116--0.8210] & 0.2374 & 0.5960 & 0.5051 [0.4020--0.6100] \\
 EfficientNet-B3 & VinDr & 0.7795 [0.7276--0.8300] & 0.2022 & 0.7273 & 0.4545 [0.3474--0.5500] \\
@@ -561,7 +564,7 @@ DenseNet-121 & VinDr & 0.7874 [0.7299--0.8401] & 0.2678 & 0.6465 & 0.5556 [0.447
 DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.5354 [0.4433--0.6404] \\
 \textbf{ConvNeXt-Base} & \textbf{VinDr} & \textbf{0.8317 [0.7832--0.8753]} & \textbf{0.2587} & \textbf{0.7475} & \textbf{0.5758 [0.4737--0.6768]} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table*}
 
 \textbf{ConvNeXt-Base} achieves the best AUROC at 0.8317 (+10.0\% over single-view DenseNet-121). DenseNet-121 with \vindr{}+\rsna{} joint training reaches AUROC=0.8028, confirming incremental cross-dataset benefit. Chest-X-ray pretraining via the torchxrayvision library\footnote{torchxrayvision: \texttt{github.com/mlmed/torchxrayvision}} underperforms ImageNet initialisation (AUROC 0.7648 vs 0.7874), consistent with domain mismatch between lung radiographs and mammographic texture.
@@ -613,7 +616,7 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \label{fig:annotation-bar}
 \end{figure*}
 
-\textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}; \autoref{fig:annotation-bar}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation or (b) test-time box injection via a lesion detector.
+\textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}; \autoref{fig:annotation-bar}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation, in which annotation boxes are randomly masked during training to prevent over-reliance on the shortcut; (b) test-time box injection via a lesion detector, so the test distribution matches training; or (c) cropping the input to the bounding-box region, passing only the annotated content to the model rather than the full image with a drawn outline. These suggestions are speculative; we are not aware of published evidence validating them specifically for mammography annotation shortcuts.
 
 \subsection{Stage 4 --- MC Dropout uncertainty quantification}
 
@@ -737,11 +740,32 @@ The per-class breakdown is shown in \autoref{tab:confusion-matrix}. This ensembl
 
 \subsubsection{Updated ensemble (25 checkpoints)}
 
-Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUC=0.8441, S@90\%=0.6566 (unchanged), sensitivity=0.7677. The marginal AUC drop confirms that weaker models drag the mean under mean combination; S@90\% is robust.
+Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUROC=0.8441, S@90\%=0.6566 (unchanged), sensitivity=0.7677. The marginal AUROC drop confirms that weaker models drag the mean under mean combination; S@90\% is robust.
 
 \subsubsection{Selective ensemble (top-3 +reg + top-5 CrossView + 3 asymmetry)}
 
-11 models, TTA$\times$5: AUC=0.8446, S@90\%=0.6667 (+0.010 over baseline). Marginally better at the clinical operating point; difference is within sampling noise.
+11 models, TTA$\times$5: AUROC=0.8446, S@90\%=0.6667 (+0.010 over baseline). Marginally better at the clinical operating point; difference is within sampling noise.
+
+\subsubsection{Ensemble comparison}
+
+\autoref{tab:ensemble-comparison} summarises all three configurations. Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
+
+\begin{table}[h!]
+\centering
+\caption{Comparison of ensemble configurations (TTA$\times$5, mean-probability combination).}
+\label{tab:ensemble-comparison}
+{\footnotesize\setlength{\tabcolsep}{3pt}%
+\begin{tabular}{@{}p{3.2cm}cccc@{}}
+\toprule
+Configuration & Models & AUROC & Sens & S@90\% \\
+\midrule
+Original (BreastPairNet) & 16 & \textbf{0.8458} & 0.7374 & 0.6566 \\
+Updated (+CrossView) & 25 & 0.8441 & 0.7677 & 0.6566 \\
+Selective (+reg+CVT+asym) & 11 & 0.8446 & --- & \textbf{0.6667} \\
+\bottomrule
+\multicolumn{5}{@{}p{0.9\columnwidth}@{}}{\small ---: not evaluated. Differences in AUROC are within the $\pm$0.04 BCa CI; the selective ensemble offers marginal S@90\% benefit.}
+\end{tabular}}
+\end{table}
 
 \subsection{Stage 6 --- Hybrid triage simulation}
 
@@ -832,7 +856,7 @@ Ours Stage 3 (CrossView) & 0.8317 \\
 \end{tabular}
 \end{table}
 
-AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. \(\ddagger\)MamT4 excludes BI-RADS 3; our pipeline retains it as negative. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} meta-analysis (pooled AUC=0.87) use different datasets and are not directly comparable.
+AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
 
 \begin{figure}[tbp]
 \centering
@@ -898,7 +922,7 @@ Specificity & 0.8296 & 0.7598 & -0.070 & -8\% \\
 \end{tabular}}
 \end{table}
 
-Three factors may drive the gap: (1) Vietnamese vs United States breast density distribution and lesion prevalence; (2) different FFDM equipment and post-processing pipelines; (3) the S@90\%spec drop ($-75.1\%$) is particularly stark at the clinical operating point, suggesting the conservative side of the decision surface is most affected by domain shift. Table~\ref{tab:model-family-summary} summarises the best-performing model family at each stage.
+Three factors may drive the gap: (1) Vietnamese vs United States breast density distribution and lesion prevalence \cite{1,11}; (2) different FFDM equipment and post-processing pipelines; (3) the S@90\%spec drop ($-75.1\%$) is particularly stark at the clinical operating point, suggesting the conservative side of the decision surface is most affected by domain shift. Table~\ref{tab:model-family-summary} summarises the best-performing model family at each stage.
 
 \begin{table*}[tbp]
 \centering
