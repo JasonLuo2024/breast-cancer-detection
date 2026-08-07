@@ -63,14 +63,14 @@
 \setlength{\parskip}{0.2em plus 0.1em}
 
 % Custom commands
-\newcommand{\auc}{\mathrm{AUC}}
+\newcommand{\auc}{\mathrm{AUROC}}
 \newcommand{\satninety}{S@90\%spec}
 \newcommand{\vindr}{VinDr-Mammo}
 \newcommand{\rsna}{RSNA 2022}
 \newcommand{\mamnet}{MamNet-6}
 
 \title{\textbf{Multi-View Fusion, CrossView Transformer, and Uncertainty-Aware Triage for Breast Cancer Detection on \vindr}\\[0.4em]
-\large From 0.756 to 0.846 AUC}
+\large From 0.756 to 0.846 AUROC}
 \author[1]{Haoming Luo}
 \author[1]{Matthew Hamilton}
 \affil[1]{\small Department of Computer Science, Memorial University, St.\ John's, NL, Canada}
@@ -109,11 +109,11 @@
 
 \begin{table*}[tbp]
 \centering
-\caption{Summary of the main AUC results across the six-stage pipeline.}
+\caption{Summary of the main AUROC results across the six-stage pipeline.}
 \label{tab:key-results}
 \begin{tabular}{@{}p{0.13\textwidth} p{0.42\textwidth} p{0.10\textwidth} p{0.22\textwidth}@{}}
 \toprule
-Stage & Method & AUC & vs.\ single-view \\
+Stage & Method & AUROC & vs.\ single-view \\
 \midrule
 Prior work & MamT4 \cite{18} (4-view Transformer)\(\ddagger\) & 0.840 & --- \\
 Stage 1 & DenseNet-121 (best single-view) & 0.756 & baseline \\
@@ -149,7 +149,7 @@ This paper makes seven contributions. First, we present a systematic comparison 
 \textbf{Stage 1:} single-view CNN baselines, best \(\auc=0.7564\).\\
 \textbf{Stage 2:} BreastPairNet CC+MLO fusion, best \(\auc=0.8256\).\\
 \textbf{Stage 3:} CrossView Transformer, best \(\auc=0.8317\).\\
-\textbf{Stage 3b:} annotation ablation, all painted-box variants lose 0.122--0.201 AUC.\\
+\textbf{Stage 3b:} annotation ablation, all painted-box variants lose 0.122--0.201 AUROC.\\
 \textbf{Stage 4:} MC Dropout, entropy-ranked uncertainty estimates.\\
 \textbf{Stage 5:} 16-model ensemble with asymmetry features and TTA, best \(\auc=0.8458\).\\
 \textbf{Stage 6:} hybrid triage simulation and external \rsna{} validation.
@@ -212,7 +212,7 @@ Five configurations: \textbf{VGG19}, \textbf{ResNet-50} (224\,px), \textbf{ResNe
 
 \subsection{BreastPairNet (Stage 2)}
 
-Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$. Two fusion heads: \textbf{concatenation} (2d-dim MLP, dropout 0.5) and \textbf{attention} (learned per-view scalar weights via softmax). The \textbf{+reg} variant adds stronger elastic deformation (16\,px), mixup ($\alpha$=0.4), and label smoothing (0.05). Training: backbone frozen 3 epochs, then discriminative LR (1e-5 backbone, 1e-4 head). \autoref{fig:breastpairnet-arch} illustrates the architecture.
+Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$. Two fusion heads: \textbf{concatenation} (2d-dim MLP, dropout 0.5) and \textbf{attention} (learned per-view scalar weights via softmax). The \textbf{+reg} variant adds stronger elastic deformation (16\,px), mixup ($\alpha$=0.4), and label smoothing (0.05). Training: backbone frozen 3 epochs, then uniform learning rate 1e-4 applied to all parameters. \autoref{fig:breastpairnet-arch} illustrates the architecture.
 
 \begin{figure*}[tbp]
 \centering
@@ -362,7 +362,7 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
       text width=2.8cm] at (5.5, -2.4)
   {\textbf{Key difference vs BreastPairNet:}\\spatial maps before pooling};
 \end{tikzpicture}
-\caption{CrossView Transformer architecture (Stage~3). Unlike BreastPairNet, the backbone output is \emph{not} global-averaged before fusion. Spatial feature maps are flattened to token sequences; a two-layer Transformer encoder applies bidirectional cross-attention ($Q_{CC}$ attends to $K,V$ from MLO and vice versa), enabling the model to localise spatially consistent findings across views before pooling. Best: ConvNeXt-Base, AUC=0.8317.}
+\caption{CrossView Transformer architecture (Stage~3). Unlike BreastPairNet, the backbone output is \emph{not} global-averaged before fusion. Spatial feature maps are flattened to token sequences; a two-layer Transformer encoder applies bidirectional cross-attention ($Q_{CC}$ attends to $K,V$ from MLO and vice versa), enabling the model to localise spatially consistent findings across views before pooling. Best: ConvNeXt-Base, AUROC=0.8317.}
 \label{fig:crossview-arch}
 \end{figure*}
 
@@ -382,7 +382,7 @@ Following Verboom et al.\ \cite{12}, cases are sorted by ascending predictive en
 
 \subsection{Training and evaluation}
 
-All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with bfloat16 and AdamW (weight decay 1e-4). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, and \textbf{\satninety{}} (sensitivity at 90\% specificity). 95\% bias-corrected and accelerated bootstrap confidence intervals (BCa CIs, $n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive). Typical AUROC CI width: $\pm$0.04--0.05.
+All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with FP16 mixed-precision (AMP) and AdamW (weight decay 1e-4 for Stage~1; 1e-3 for Stage~2). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, and \textbf{\satninety{}} (sensitivity at 90\% specificity). 95\% percentile bootstrap confidence intervals ($n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive). Typical AUROC CI width: $\pm$0.04--0.05.
 
 \section{Experiments and Results}
 
@@ -396,7 +396,7 @@ DenseNet-121 achieves the best AUROC (0.7564) but only 24.8\% sensitivity at the
 \label{tab:single-view}
 \begin{tabular}{@{}p{0.22\textwidth} p{0.10\textwidth} p{0.10\textwidth} p{0.10\textwidth} p{0.08\textwidth} p{0.10\textwidth} p{0.10\textwidth}@{}}
 \toprule
-Architecture & Image size & Sensitivity & Specificity & F1 & AUC & S@90\% \\
+Architecture & Image size & Sensitivity & Specificity & F1 & AUROC & S@90\% \\
 \midrule
 VGG19 & 224 px & 0.2626 & 0.9835 & 0.3323 & 0.7066 & 0.3990 \\
 ResNet-50 & 224 px & 0.2677 & 0.9847 & 0.3430 & 0.7286 & 0.4495 \\
@@ -413,7 +413,7 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 \begin{axis}[
     ybar, bar width=16pt,
     width=0.88\linewidth, height=4.5cm,
-    ylabel={AUC}, ymin=0.68, ymax=0.78,
+    ylabel={AUROC}, ymin=0.68, ymax=0.78,
     ytick={0.68,0.70,0.72,0.74,0.76,0.78},
     xtick=data,
     symbolic x coords={VGG19, ResNet-50, EffNet-B3, ResNet-50*, DenseNet-121},
@@ -431,13 +431,13 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 };
 \end{axis}
 \end{tikzpicture}
-\caption{Stage~1: AUC by single-view architecture. ResNet-50* uses 384\,px; all others 224\,px.}
+\caption{Stage~1: AUROC by single-view architecture. ResNet-50* uses 384\,px; all others 224\,px.}
 \label{fig:stage1-bar}
 \end{figure*}
 
 \subsection{Stage 2 --- Multi-view BreastPairNet}
 
-The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split. Standard deviations across runs are not reported as each configuration was trained once; the 95\% BCa CIs quantify test-split sampling variability, not run-to-run variability.
+The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split. Standard deviations across runs are not reported as each configuration was trained once; the 95\% percentile bootstrap CIs quantify test-split sampling variability, not run-to-run variability.
 
 \begin{table*}[tbp]
 \centering
@@ -445,7 +445,7 @@ The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.
 \label{tab:breastpairnet}
 \begin{tabular}{@{}p{0.22\textwidth} p{0.09\textwidth} p{0.08\textwidth} p{0.20\textwidth} p{0.07\textwidth} p{0.07\textwidth} p{0.15\textwidth}@{}}
 \toprule
-Architecture & Fusion & Image & Best AUC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
+Architecture & Fusion & Image & Best AUROC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
 \midrule
 ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.2350 & 0.5354 & 0.4646 [0.3736--0.5673] \\
 ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.2522 & 0.5859 & 0.5051 [0.4023--0.6019] \\
@@ -469,7 +469,7 @@ EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273
 \label{tab:regularisation-effect}
 \begin{tabular}{@{}llccc@{}}
 \toprule
-Backbone & Fusion & Base AUC & +reg AUC & Gain \\
+Backbone & Fusion & Base AUROC & +reg AUROC & Gain \\
 \midrule
 DenseNet-121 & concat & 0.8073 & 0.8177 & +0.010 \\
 DenseNet-121 & attention & 0.8014 & 0.8097 & +0.008 \\
@@ -484,7 +484,7 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \begin{axis}[
     ybar, bar width=12pt,
     width=0.85\linewidth, height=5.5cm,
-    ylabel={AUC}, ymin=0.79, ymax=0.835,
+    ylabel={AUROC}, ymin=0.79, ymax=0.835,
     ytick={0.79,0.80,0.81,0.82,0.83},
     xtick=data,
     symbolic x coords={DN121/concat, DN121/attn, EffB3/attn},
@@ -503,11 +503,11 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \legend{Base, {+reg}}
 \end{axis}
 \end{tikzpicture}
-\caption{Stage~2: Effect of +reg on AUC for three backbone/fusion pairs.}
+\caption{Stage~2: Effect of +reg on AUROC for three backbone/fusion pairs.}
 \label{fig:stage2-reg-bar}
 \end{figure*}
 
-All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} are obtained by re-evaluating each best-checkpoint model on the held-out test split (n=2,000 pairs, 99 positives) at the Youden-optimal threshold, with 95\% BCa bootstrap confidence intervals ($n$=2,000 resamples). Validation AUROC curves for the best Stage~2 and Stage~3 models are shown in \autoref{fig:training-curves}.
+All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} are obtained by re-evaluating each best-checkpoint model on the held-out test split (n=2,000 pairs, 99 positives) at the Youden-optimal threshold, with 95\% percentile bootstrap confidence intervals ($n$=2,000 resamples). Validation AUROC curves for the best Stage~2 and Stage~3 models are shown in \autoref{fig:training-curves}.
 
 Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:stage2-reg-bar}). \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
 
@@ -516,7 +516,7 @@ Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:
 \begin{tikzpicture}
 \begin{axis}[
     width=0.9\linewidth, height=6cm,
-    xlabel={Training epoch}, ylabel={Validation AUC},
+    xlabel={Training epoch}, ylabel={Validation AUROC},
     xmin=0.5, xmax=30.5, ymin=0.53, ymax=0.86,
     xtick={1,5,10,15,20,25,30},
     ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
@@ -552,10 +552,10 @@ Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:
 \addplot[dashed, radblue!50, thin, forget plot] coordinates {(4,0.53)(4,0.86)};
 % Vertical dashed line: ConvNeXt backbone unfreeze (epoch 5)
 \addplot[dashed, red!40, thin, forget plot] coordinates {(5,0.53)(5,0.86)};
-\legend{Stage 2: EffB3 +reg (AUC=0.8256 at ep.~7), Stage 3: ConvNeXt-Base (AUC=0.8317 at ep.~8)}
+\legend{Stage 2: EffB3 +reg (AUROC=0.8256 at ep.~7), Stage 3: ConvNeXt-Base (AUROC=0.8317 at ep.~8)}
 \end{axis}
 \end{tikzpicture}
-\caption{Validation AUC vs.\ training epoch for the best Stage~2 (EffB3 +reg) and Stage~3 (ConvNeXt-Base) models. Vertical dashed lines mark the backbone unfreeze point (epoch~4 for EffB3, epoch~5 for ConvNeXt). Stars ($\star$) indicate the best-checkpoint epoch used for test-set evaluation. Both models overfit after their best epoch as training loss continues to decrease while validation AUC plateaus.}
+\caption{Validation AUROC vs.\ training epoch for the best Stage~2 (EffB3 +reg) and Stage~3 (ConvNeXt-Base) models. Vertical dashed lines mark the backbone unfreeze point (epoch~4 for EffB3, epoch~5 for ConvNeXt). Stars ($\star$) indicate the best-checkpoint epoch used for test-set evaluation. Both models overfit after their best epoch as training loss continues to decrease while validation AUROC plateaus.}
 \label{fig:training-curves}
 \end{figure*}
 
@@ -591,7 +591,7 @@ DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.5354 [
 \label{tab:annotation-ablation}
 \begin{tabular}{@{}p{0.23\textwidth} p{0.27\textwidth} p{0.27\textwidth} p{0.10\textwidth}@{}}
 \toprule
-Architecture & No annotation AUC [95\% CI] & With annotation AUC [95\% CI] & \(\Delta\)AUC \\
+Architecture & No annotation AUROC [95\% CI] & With annotation AUROC [95\% CI] & \(\Delta\)AUROC \\
 \midrule
 DenseNet-121 & 0.7874 [0.7299--0.8401] & 0.5862 [0.5274--0.6433] & -0.201 \\
 DenseNet-121 +RSNA & 0.8028 [0.7484--0.8536] & 0.6675 & -0.135 \\
@@ -607,7 +607,7 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \begin{axis}[
     ybar, bar width=12pt,
     width=0.9\linewidth, height=5.5cm,
-    ylabel={AUC}, ymin=0.55, ymax=0.86,
+    ylabel={AUROC}, ymin=0.55, ymax=0.86,
     ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
     xtick=data,
     symbolic x coords={DN121, DN121-RSNA, DN121-med, EffB3},
@@ -626,7 +626,7 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \legend{No annotation, With annotation}
 \end{axis}
 \end{tikzpicture}
-\caption{Stage~3b: Annotation consistently degrades AUC due to shortcut learning and test-time distribution shift.}
+\caption{Stage~3b: Annotation consistently degrades AUROC due to shortcut learning and test-time distribution shift.}
 \label{fig:annotation-bar}
 \end{figure*}
 
@@ -729,7 +729,7 @@ Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three br
 \label{tab:ensemble}
 \begin{tabular}{@{}p{0.20\textwidth} ccccccc@{}}
 \toprule
-Method & AUC & Sens & Spec & F1 & S@90\% & S@95\% & Threshold \\
+Method & AUROC & Sens & Spec & F1 & S@90\% & S@95\% & Threshold \\
 \midrule
 \textbf{Ensemble (N=16, TTA=5)} & \textbf{0.8458} & \textbf{0.7374} & \textbf{0.8296} & \textbf{0.2944} & \textbf{0.6566} & \textbf{0.5657} & \textbf{0.3414} \\
 \bottomrule
@@ -777,7 +777,7 @@ Original (BreastPairNet) & 16 & \textbf{0.8458} & 0.7374 & 0.6566 \\
 Updated (+CrossView) & 25 & 0.8441 & 0.7677 & 0.6566 \\
 Selective (+reg+CVT+asym) & 11 & 0.8446 & --- & \textbf{0.6667} \\
 \bottomrule
-\multicolumn{5}{@{}p{0.9\columnwidth}@{}}{\small ---: not evaluated. Differences in AUROC are within the $\pm$0.04 BCa CI; the selective ensemble offers marginal S@90\% benefit.}
+\multicolumn{5}{@{}p{0.9\columnwidth}@{}}{\small ---: not evaluated. Differences in AUROC are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers marginal S@90\% benefit.}
 \end{tabular}}
 \end{table}
 
@@ -855,11 +855,11 @@ $\geq$77\% & 70\% & 50\% & -50\% to -70\% \\
 
 \begin{table}[h!]
 \centering
-\caption{AUC progression on \vindr{} binary cancer detection.}
+\caption{AUROC progression on \vindr{} binary cancer detection.}
 \label{tab:auc-progression}
 \begin{tabular}{@{}p{0.62\columnwidth} p{0.28\columnwidth}@{}}
 \toprule
-Method & AUC \\
+Method & AUROC \\
 \midrule
 MamT4 \cite{18}\(\ddagger\) & 0.840 \\
 Ours Stage 1 (DenseNet-121) & 0.7564 \\
@@ -870,7 +870,7 @@ Ours Stage 3 (CrossView) & 0.8317 \\
 \end{tabular}
 \end{table}
 
-AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
+AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
 
 \begin{figure}[tbp]
 \centering
@@ -878,7 +878,7 @@ AUROC progression across the pipeline is summarised in \autoref{tab:auc-progress
 \begin{axis}[
     ybar, bar width=9pt,
     width=\columnwidth, height=4.5cm,
-    ylabel={AUC}, ymin=0.72, ymax=0.87,
+    ylabel={AUROC}, ymin=0.72, ymax=0.87,
     ytick={0.72,0.76,0.80,0.84},
     xtick=data,
     symbolic x coords={MamT4, Stage 1, Stage 2, Stage 3, Ensemble},
@@ -896,7 +896,7 @@ AUROC progression across the pipeline is summarised in \autoref{tab:auc-progress
 };
 \end{axis}
 \end{tikzpicture}
-\caption{AUC progression across pipeline stages vs.\ MamT4 prior work.}
+\caption{AUROC progression across pipeline stages vs.\ MamT4 prior work.}
 \label{fig:auc-progression}
 \end{figure}
 
@@ -911,7 +911,7 @@ The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. F
 {\scriptsize\setlength{\tabcolsep}{3pt}%
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-Dataset & AUC [95\% CI] & S@90\% & Sens & Spec \\
+Dataset & AUROC [95\% CI] & S@90\% & Sens & Spec \\
 \midrule
 \vindr{} & 0.8458 & 0.6566 & 0.7374 & 0.8296 \\
 \rsna{} & 0.6008 [0.5577--0.6585] & 0.1636 & 0.3909 & 0.7598 \\
@@ -928,7 +928,7 @@ Dataset & AUC [95\% CI] & S@90\% & Sens & Spec \\
 \toprule
 Metric & \vindr{} & \rsna{} & Drop & Rel. \\
 \midrule
-AUC & 0.8458 & 0.6008 & -0.245 & -29\% \\
+AUROC & 0.8458 & 0.6008 & -0.245 & -29\% \\
 S@90\%spec & 0.6566 & 0.1636 & \textbf{-0.493} & \textbf{-75\%} \\
 Sensitivity & 0.7374 & 0.3909 & -0.347 & -47\% \\
 Specificity & 0.8296 & 0.7598 & -0.070 & -8\% \\
@@ -945,7 +945,7 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 {\small\setlength{\tabcolsep}{4pt}%
 \begin{tabular}{@{}p{0.21\textwidth} p{0.11\textwidth} p{0.19\textwidth} p{0.09\textwidth} p{0.21\textwidth}@{}}
 \toprule
-Family & Best AUC & 95\% CI & S@90\% & Key advantage \\
+Family & Best AUROC & 95\% CI & S@90\% & Key advantage \\
 \midrule
 Single-view CNN & 0.7564 & --- & 0.4444 & Simple baseline \\
 BreastPairNet (concat) & 0.8177 & 0.7659--0.8649 & 0.6061 & Robust across backbones \\
@@ -964,17 +964,17 @@ Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best o
 
 \textbf{Regularisation benefit.} With only $\sim$395 cancer-positive training pairs, the limited positive sample count may explain why stronger augmentation (elastic deformation, mixup, label smoothing) acts as a powerful implicit regulariser. AUROC gains from 0.008 to 0.021 were observed consistently across all backbone/fusion pairs tested.
 
-\textbf{CrossView Transformer vs BreastPairNet.} ConvNeXt-Base (AUROC=0.8317) vs EfficientNet-B3 +reg (AUROC=0.8256): $\Delta$=0.006, which is within the $\pm$0.04 BCa CI---these models are not statistically separated. One plausible explanation is that exchanging spatial feature maps before global pooling may preserve localisation information that BreastPairNet's independent pooling discards, though confounded by the different backbone architectures.
+\textbf{CrossView Transformer vs BreastPairNet.} ConvNeXt-Base (AUROC=0.8317) vs EfficientNet-B3 +reg (AUROC=0.8256): $\Delta$=0.006, which is within the $\pm$0.04 percentile bootstrap CI---these models are not statistically separated. One plausible explanation is that exchanging spatial feature maps before global pooling may preserve localisation information that BreastPairNet's independent pooling discards, though confounded by the different backbone architectures.
 
 \textbf{Medical pretraining.} Chest-X-ray features (lung parenchyma, mediastinum, rib edges) may be domain-mismatched to mammographic texture, which could explain why ImageNet initialisation outperformed torchxrayvision chest-X-ray weights (AUROC 0.7874 vs 0.7648). However, as these configurations also differ in other ways, this interpretation is tentative.
 
 \textbf{Bounding-box shortcut learning.} Painted boxes provide a texture shortcut perfectly correlated with the cancer label during training but absent at test time. This pattern is consistent with well-documented shortcut learning phenomena in medical imaging. Potential remedies may include box-dropout regularisation or test-time box injection via a lesion detector.
 
-\textbf{MC Dropout uncertainty.} The +0.003 AUROC gain from MC Dropout is within the 95\% BCa CI and should not be over-interpreted. The more clinically meaningful finding is the sensitivity boost (+3.0 percentage points, AUROC 0.8073$\to$0.8099) and the 0.056-nat entropy gap between cancer-positive and cancer-negative classes, which enables the Stage~6 triage protocol.
+\textbf{MC Dropout uncertainty.} The +0.003 AUROC gain from MC Dropout is within the 95\% percentile bootstrap CI and should not be over-interpreted. The more clinically meaningful finding is the sensitivity boost (+3.0 percentage points, AUROC 0.8073$\to$0.8099) and the 0.056-nat entropy gap between cancer-positive and cancer-negative classes, which enables the Stage~6 triage protocol.
 
 \textbf{Triage simulation.} Under realistic 85\% radiologist sensitivity \cite{17}, K=50\% yields only 77.3\% overall sensitivity---10.6 percentage points below the oracle result (87.9\%). These simulations suggest K$\leq$40\% may be required to maintain overall sensitivity above the 80\% clinical floor; prospective validation with real reader sensitivity data would be needed to confirm these thresholds.
 
-\textbf{Confidence intervals.} With only 99 cancer-positive test pairs, BCa CI width is $\pm$0.04--0.05 AUROC. Differences of less than 0.01 AUROC should be treated as within sampling noise. BreastPairNet (AUROC=0.8256, 95\% CI 0.7755--0.8707) and CrossView Transformer (AUROC=0.8317, 95\% CI 0.7832--0.8753) are not statistically separated.
+\textbf{Confidence intervals.} With only 99 cancer-positive test pairs, percentile bootstrap CI width is $\pm$0.04--0.05 AUROC. Differences of less than 0.01 AUROC should be treated as within sampling noise. BreastPairNet (AUROC=0.8256, 95\% CI 0.7755--0.8707) and CrossView Transformer (AUROC=0.8317, 95\% CI 0.7832--0.8753) are not statistically separated.
 
 \textbf{Limitations.} (i) Small positive test count (99 pairs) limits fine-grained comparison; (ii) large domain gap to United States FFDM (AUROC=0.6008 on \rsna{}); (iii) MamT4 comparison uses a slightly different BI-RADS exclusion; (iv) 7,054 non-CC/MLO RSNA images excluded from pair construction.
 
