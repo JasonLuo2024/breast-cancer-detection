@@ -173,7 +173,7 @@ This paper makes seven contributions. First, we present a systematic comparison 
 
 \subsection{\vindr{} (primary dataset)}
 
-\vindr{} \cite{1} contains 20,000 FFDM images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations.
+\vindr{} \cite{1} contains 20,000 FFDM images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations (\autoref{tab:birads-distribution}).
 
 \begin{table}[h!]
 \centering
@@ -372,7 +372,7 @@ All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with bfloat16 and AdamW (wei
 
 \subsection{Stage 1 --- Single-view CNN baselines}
 
-DenseNet-121 achieves the best AUC (0.7564) but only 24.8\% sensitivity at the default threshold. All five models overfit (train F1~$\approx$~0.98) and reach only 40--45\% sensitivity at the 90\%-specificity operating point --- well below the $\sim$85\% radiologist sensitivity in screening literature \cite{17}.
+DenseNet-121 achieves the best AUROC (0.7564) but only 24.8\% sensitivity at the default threshold (\autoref{tab:single-view}; \autoref{fig:stage1-bar}). All five models overfit (train F1~$\approx$~0.98) and reach only 40--45\% sensitivity at the 90\%-specificity operating point --- well below the $\sim$85\% radiologist sensitivity in screening literature \cite{17}.
 
 \begin{table*}[tbp]
 \centering
@@ -421,7 +421,7 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 
 \subsection{Stage 2 --- Multi-view BreastPairNet}
 
-The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view.
+The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split.
 
 \begin{table*}[tbp]
 \centering
@@ -491,9 +491,9 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \label{fig:stage2-reg-bar}
 \end{figure*}
 
-All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} are obtained by re-evaluating each best-checkpoint model on the held-out test split (n=2,000 pairs, 99 positives) at the Youden-optimal threshold, with 95\% BCa bootstrap confidence intervals ($n$=2,000 resamples).
+All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} are obtained by re-evaluating each best-checkpoint model on the held-out test split (n=2,000 pairs, 99 positives) at the Youden-optimal threshold, with 95\% BCa bootstrap confidence intervals ($n$=2,000 resamples). Validation AUROC curves for the best Stage~2 and Stage~3 models are shown in \autoref{fig:training-curves}.
 
-Three observations stand out. \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
+Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:stage2-reg-bar}). \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
 
 \begin{figure*}[tbp]
 \centering
@@ -613,7 +613,7 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \label{fig:annotation-bar}
 \end{figure*}
 
-\textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201.} At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation or (b) test-time box injection via a lesion detector.
+\textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}; \autoref{fig:annotation-bar}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation or (b) test-time box injection via a lesion detector.
 
 \subsection{Stage 4 --- MC Dropout uncertainty quantification}
 
@@ -632,7 +632,7 @@ Deterministic & 0.8073 & 0.7374 & 0.7249 & 0.5152 & 0.3304 \\
 \end{tabular}}
 \end{table}
 
-MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives --- a 0.056-nat gap that enables the Stage~6 triage policy.
+MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}; inference flow in \autoref{fig:mc-dropout-flow}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
 
 \begin{table}[h!]
 \centering
@@ -704,7 +704,7 @@ Std dev & 0.1436 & 0.1370 \\
 
 \subsubsection{Original ensemble (16 BreastPairNet models)}
 
-Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three breast-asymmetry models and five-fold test-time augmentation (TTA$\times$5). \textbf{Best result in the study}: AUROC=0.8458, sensitivity=0.7374, specificity=0.8296, F1=0.2944, S@90\%=0.6566, S@95\%=0.5657 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26).
+Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three breast-asymmetry models and five-fold test-time augmentation (TTA$\times$5). \textbf{Best result in the study}: AUROC=0.8458, sensitivity=0.7374, specificity=0.8296, F1=0.2944, S@90\%=0.6566, S@95\%=0.5657 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26; \autoref{tab:ensemble}).
 
 \begin{table*}[tbp]
 \centering
@@ -722,6 +722,7 @@ Method & AUC & Sens & Spec & F1 & S@90\% & S@95\% & Threshold \\
 \begin{table}[h!]
 \centering
 \caption{Confusion matrix at Youden threshold ($t=0.3414$).}
+\label{tab:confusion-matrix}
 \begin{tabular}{@{}lcc@{}}
 \toprule
  & Pred.\ negative & Pred.\ positive \\
@@ -732,7 +733,7 @@ Actual positive & FN = 26      & TP = 73  \\
 \end{tabular}
 \end{table}
 
-This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
+The per-class breakdown is shown in \autoref{tab:confusion-matrix}. This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
 
 \subsubsection{Updated ensemble (25 checkpoints)}
 
@@ -793,7 +794,7 @@ Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
 \label{fig:triage-sensitivity}
 \end{figure*}
 
-Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction}. Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\%.
+Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}; \autoref{fig:triage-sensitivity}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:sensitivity-floors}).
 
 \begin{table}[h!]
 \centering
@@ -831,7 +832,7 @@ Ours Stage 3 (CrossView) & 0.8317 \\
 \end{tabular}
 \end{table}
 
-\(\ddagger\)MamT4 excludes BI-RADS 3; our pipeline retains it as negative. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} meta-analysis (pooled AUC=0.87) use different datasets and are not directly comparable.
+AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. \(\ddagger\)MamT4 excludes BI-RADS 3; our pipeline retains it as negative. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} meta-analysis (pooled AUC=0.87) use different datasets and are not directly comparable.
 
 \begin{figure}[tbp]
 \centering
@@ -862,6 +863,8 @@ Ours Stage 3 (CrossView) & 0.8317 \\
 \end{figure}
 
 \subsection{External validation on \rsna{}}
+
+The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:external-validation}; the per-metric performance drop is detailed in \autoref{tab:domain-gap}.
 
 \begin{table}[h!]
 \centering
