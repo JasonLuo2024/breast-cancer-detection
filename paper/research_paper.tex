@@ -212,7 +212,7 @@ Five configurations: \textbf{VGG19}, \textbf{ResNet-50} (224\,px), \textbf{ResNe
 
 \subsection{BreastPairNet (Stage 2)}
 
-Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$. Two fusion heads: \textbf{concatenation} (2d-dim MLP, dropout 0.5) and \textbf{attention} (learned per-view scalar weights via softmax). The \textbf{+reg} variant adds stronger elastic deformation (16\,px), mixup ($\alpha$=0.4), and label smoothing (0.05). Training: backbone frozen 3 epochs, then uniform learning rate 1e-4 applied to all parameters. \autoref{fig:breastpairnet-arch} illustrates the architecture.
+Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$. Two fusion heads: \textbf{concatenation} (2d-dim MLP, dropout 0.5) and \textbf{attention} (learned per-view scalar weights via softmax). The \textbf{+reg} variant adds stronger elastic deformation (\texttt{alpha}=50, \texttt{sigma}=5), mixup ($\alpha$=0.2), and label smoothing (0.1). Training: backbone frozen 3 epochs, then uniform learning rate 1e-4 applied to all parameters. \autoref{fig:breastpairnet-arch} illustrates the architecture.
 
 \begin{figure*}[tbp]
 \centering
