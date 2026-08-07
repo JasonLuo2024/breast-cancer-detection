@@ -178,7 +178,7 @@ This paper makes seven contributions. First, we present a systematic comparison 
 
 \vindr{} \cite{1} contains 20,000 FFDM images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations (\autoref{tab:birads-distribution}).
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{BI-RADS distribution in \vindr{} and binary label mapping.}
 \label{tab:birads-distribution}
@@ -437,6 +437,7 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 \label{fig:stage1-bar}
 \end{figure*}
 
+\FloatBarrier
 \subsection{Stage 2 --- Multi-view BreastPairNet}
 
 The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split. Standard deviations across runs are not reported as each configuration was trained once; the 95\% percentile bootstrap CIs quantify test-split sampling variability, not run-to-run variability.
@@ -561,6 +562,7 @@ Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:
 \label{fig:training-curves}
 \end{figure*}
 
+\FloatBarrier
 \subsection{Stage 3 --- CrossView Transformer}
 
 \subsubsection{Performance without annotation}
@@ -634,9 +636,10 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 
 \textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}; \autoref{fig:annotation-bar}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation, in which annotation boxes are randomly masked during training to prevent over-reliance on the shortcut; (b) test-time box injection via a lesion detector, so the test distribution matches training; or (c) cropping the input to the bounding-box region, passing only the annotated content to the model rather than the full image with a drawn outline. These suggestions are speculative; we are not aware of published evidence validating them specifically for mammography annotation shortcuts.
 
+\FloatBarrier
 \subsection{Stage 4 --- MC Dropout uncertainty quantification}
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{MC Dropout vs deterministic inference (DenseNet-121/concat).}
 \label{tab:mc-dropout}
@@ -653,7 +656,7 @@ Deterministic & 0.8073 & 0.7374 & 0.7249 & 0.5152 & 0.3304 \\
 
 MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}; inference flow in \autoref{fig:mc-dropout-flow}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{Predictive entropy by class ($N=20$ MC passes, 2,000 test pairs).}
 \label{tab:mc-entropy}
@@ -719,6 +722,7 @@ Std dev & 0.1436 & 0.1370 \\
 \label{fig:mc-dropout-flow}
 \end{figure*}
 
+\FloatBarrier
 \subsection{Stage 5 --- Model ensemble}
 
 \subsubsection{Original ensemble (16 BreastPairNet models)}
@@ -738,7 +742,7 @@ Method & AUROC & Sens & Spec & F1 & S@90\% & S@95\% & Threshold \\
 \end{tabular}
 \end{table*}
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{Confusion matrix at Youden threshold ($t=0.3414$).}
 \label{tab:confusion-matrix}
@@ -766,7 +770,7 @@ Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUROC=0
 
 \autoref{tab:ensemble-comparison} summarises all three configurations. Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{Comparison of ensemble configurations (TTA$\times$5, mean-probability combination).}
 \label{tab:ensemble-comparison}
@@ -783,9 +787,10 @@ Selective (+reg+CVT+asym) & 11 & 0.8446 & --- & \textbf{0.6667} \\
 \end{tabular}}
 \end{table}
 
+\FloatBarrier
 \subsection{Stage 6 --- Hybrid triage simulation}
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{Hybrid triage sweep (oracle vs.\ 85\% radiologist sensitivity).}
 \label{tab:triage-sweep}
@@ -836,7 +841,7 @@ Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
 
 Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}; \autoref{fig:triage-sensitivity}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:sensitivity-floors}).
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{Max AI-read fraction by sensitivity floor.}
 \label{tab:sensitivity-floors}
@@ -853,9 +858,10 @@ $\geq$77\% & 70\% & 50\% & -50\% to -70\% \\
 \end{tabular}}
 \end{table}
 
+\FloatBarrier
 \subsection{Comparison to literature}
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{AUROC progression on \vindr{} binary cancer detection.}
 \label{tab:auc-progression}
@@ -902,11 +908,12 @@ AUROC progression across the pipeline is summarised in \autoref{tab:auc-progress
 \label{fig:auc-progression}
 \end{figure}
 
+\FloatBarrier
 \subsection{External validation on \rsna{}}
 
 The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:external-validation}; the per-metric performance drop is detailed in \autoref{tab:domain-gap}.
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{External validation: \vindr{} (2{,}000 pairs, 99 cancers) vs.\ \rsna{} (4{,}764 pairs, 110 cancers).}
 \label{tab:external-validation}
@@ -921,7 +928,7 @@ Dataset & AUROC [95\% CI] & S@90\% & Sens & Spec \\
 \end{tabular}}
 \end{table}
 
-\begin{table}[h!]
+\begin{table}[htbp]
 \centering
 \caption{Performance drop: \vindr{} $\to$ \rsna{}.}
 \label{tab:domain-gap}
