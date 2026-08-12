@@ -15,6 +15,7 @@
 \usepackage{caption}
 \usepackage{xurl}
 \usepackage{placeins}
+\usepackage{balance}
 \usepackage{stfloats}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18, every axis/.append style={font=\small}}
@@ -69,8 +70,7 @@
 \newcommand{\rsna}{RSNA 2022}
 \newcommand{\mamnet}{MamNet-6}
 
-\title{\textbf{Multi-View Fusion, CrossView Transformer, and Uncertainty-Aware Triage for Breast Cancer Detection on \vindr}\\[0.4em]
-\large From 0.756 to 0.846 AUROC}
+\title{\textbf{\mamnet{}: Multi-View Fusion, CrossView Transformer, and Uncertainty-Aware Triage for Breast Cancer Detection on \vindr}}
 \author[1]{Haoming Luo}
 \author[1]{Matthew Hamilton}
 \author[1]{Oscar Meruvia-Pastor}
@@ -91,16 +91,16 @@
 \textbf{Background:} Breast cancer is the most commonly diagnosed cancer worldwide. Population screening based on full-field digital mammography (FFDM) reduces mortality but imposes heavy radiologist workload and substantial inter-reader variability, motivating computer-aided diagnosis.
 
 \smallskip
-\textbf{Purpose:} To develop and evaluate \mamnet{}, a six-stage pipeline for breast cancer detection on the \vindr{} FFDM benchmark, progressing from single-view CNN baselines to a multi-view ensemble with uncertainty-aware triage simulation.
+\textbf{Purpose:} To develop and evaluate \mamnet{}, a six-stage pipeline for breast cancer detection on the \vindr{} FFDM benchmark from Vietnam, progressing from single-view CNN baselines to a multi-view ensemble with uncertainty-aware triage simulation.
 
 \smallskip
-\textbf{Materials and Methods:} We trained five single-view CNN backbones (Stage~1), a shared-backbone BreastPairNet multi-view network across twelve backbone$\times$fusion$\times$resolution variants (Stage~2), a CrossView Transformer with spatial cross-attention (Stage~3), and a bounding-box annotation ablation study (Stage~3b). We then applied Monte Carlo (MC) Dropout for uncertainty quantification (Stage~4), assembled a 16-model ensemble with test-time augmentation (TTA) (Stage~5), and evaluated a Verboom-style hybrid triage simulation (Stage~6). External zero-shot validation was performed on the \rsna{} dataset from United States screening programmes.
+\textbf{Materials and Methods:} We trained five single-view CNN backbones (Stage~1), a shared-backbone BreastPairNet multi-view network across twelve backbone$\times$fusion$\times$resolution variants (Stage~2), a CrossView Transformer with spatial cross-attention (Stage~3), and a bounding-box annotation ablation study (Stage~3b). We then applied Monte Carlo (MC) Dropout for uncertainty quantification (Stage~4), assembled a 16-model ensemble with test-time augmentation (TTA) (Stage~5), and evaluated a Verboom-style hybrid triage simulation (Stage~6). External zero-shot validation was performed on the \rsna{} dataset.
 
 \smallskip
 \textbf{Results:} DenseNet-121 attained AUROC=0.7564 (Stage~1). BreastPairNet improved to AUROC=0.8256 (+9.1\%, Stage~2); CrossView Transformer reached AUROC=0.8317 (+10.0\%, Stage~3). Bounding-box annotations degraded AUROC by 0.12--0.20. The 16-model ensemble achieved AUROC=0.8458 (+11.8\%) with sensitivity at 90\% specificity (S@90\%spec)=0.6566. Hybrid triage at 50\% AI reads preserved 87.9\% sensitivity under oracle conditions. External \rsna{} AUROC=0.6008.
 
 \smallskip
-\textbf{Conclusion:} A six-stage multi-view pipeline achieves AUROC=0.8458 on \vindr{}. Bounding-box shortcut learning is a key negative finding; domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains an open challenge.
+\textbf{Conclusion:} A six-stage multi-view pipeline achieves AUROC=0.8458 on \vindr{}. Bounding-box shortcut learning is a key negative finding; domain generalisation to the \rsna{} dataset remains an open challenge.
 \end{tcolorbox}
 \smallskip
 \noindent\textbf{Keywords:} breast cancer detection; mammography; \mamnet{}; multi-view learning; uncertainty quantification; triage; \vindr{}.
@@ -128,7 +128,7 @@ External & \rsna{} (zero-shot transfer) & 0.601 & domain gap \textbf{!} \\
 \end{tabular}
 \end{table*}
 
-Sensitivity at 90\% specificity (\satninety{}) on \vindr{}: \textbf{0.6566} (best ensemble) vs 0.1636 (\rsna{} --- large domain gap, indicating that the conservative end of the decision surface is most affected by domain shift).
+Sensitivity at 90\% specificity (\satninety{}) on \vindr{}: \textbf{0.6566} (best ensemble) vs 0.1636 (\rsna{}). The results suggest that the conservative end of the decision surface is most affected by domain shift, which may be due to a large domain gap between the Vietnamese \vindr{} training data and the \rsna{} screening population.
 
 \section{Introduction}
 
@@ -172,11 +172,11 @@ This paper makes seven contributions. First, we present a systematic comparison 
 
 \textbf{Uncertainty quantification.} Kendall and Gal \cite{13} formalised aleatoric and epistemic uncertainty; MC Dropout provides tractable Bayesian model averaging. Verboom et al. \cite{12} demonstrated 38.1\% workload reduction on 41,469 Dutch screening exams while preserving cancer detection rate.
 
-\section{Dataset}
+\section{Datasets}
 
 \subsection{\vindr{} (primary dataset)}
 
-\vindr{} \cite{1} contains 20,000 FFDM images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations (\autoref{tab:birads-distribution}).
+\vindr{} \cite{1} is a Vietnamese FFDM benchmark containing 20,000 images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations (\autoref{tab:birads-distribution}).
 
 \begin{table}[htbp]
 \centering
@@ -204,11 +204,11 @@ The \rsna{} dataset comprises 54,706 screening DICOMs from 11,913 patients. Afte
 
 \section{Methods}
 
-\subsection{DICOM preprocessing (12/14-bit \(\rightarrow\) 8-bit PNG)}
+\subsection{DICOM Preprocessing}
 
 Four-step pipeline: (1) decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) standardise breast orientation so that the breast faces right---a horizontal flip is applied when the mean intensity of the left image half exceeds the right, since breast tissue is brighter than the background field. Output: single-channel 8-bit PNG replicated to 3 channels.
 
-\subsection{Single-view CNN backbones}
+\subsection{Single-view CNN Backbones (Stage 1)}
 
 Five configurations: \textbf{VGG19}, \textbf{ResNet-50} (224\,px), \textbf{ResNet-50} (384\,px), \textbf{EfficientNet-B3} (224\,px), \textbf{DenseNet-121} (224\,px). All use ImageNet weights, focal loss ($\alpha$=0.25, $\gamma$=2.0) \cite{5}, WeightedRandomSampler, and AdamW with cosine decay. Training: 20 epochs with early stopping on validation AUROC.
 
@@ -368,7 +368,7 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 \label{fig:crossview-arch}
 \end{figure*}
 
-\subsection{Bounding-box annotation (training only)}
+\subsection{Bounding-box Annotation (Stage 3b)}
 
 Ground-truth boxes (\vindr{}) were drawn as white outlines (40-px line width) on training images only. For \rsna{}, a YOLOv8s detector pre-trained on \vindr{} was used (0.8\% sensitivity --- noisy hints only). Test sets always used original unannotated PNGs to prevent label leakage.
 
@@ -378,7 +378,7 @@ MC Dropout was chosen for uncertainty quantification because it requires no arch
 
 Concretely, BatchNorm is kept in eval mode while dropout remains active. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is selected by maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the validation set.
 
-\subsection{Hybrid triage (Verboom 2025 framework)}
+\subsection{Hybrid Triage (Stage 6)}
 
 Following Verboom et al.\ \cite{12}, cases are sorted by ascending predictive entropy; the K most-confident fraction is routed to AI and the remainder to a radiologist (modelled as oracle or 85\% sensitivity). Overall sensitivity = (TP$_\text{AI}$ + cancers referred) / total cancers.
 
@@ -985,6 +985,8 @@ Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best o
 
 \textbf{Confidence intervals.} With only 99 cancer-positive test pairs, percentile bootstrap CI width is $\pm$0.04--0.05 AUROC. Differences of less than 0.01 AUROC should be treated as within sampling noise. BreastPairNet (AUROC=0.8256, 95\% CI 0.7755--0.8707) and CrossView Transformer (AUROC=0.8317, 95\% CI 0.7832--0.8753) are not statistically separated.
 
+\textbf{Contribution relative to MamT4.} A reviewer might ask whether \mamnet{} offers meaningful progress given that MamT4 \cite{18} reports AUROC=0.840 on \vindr{}. Three points distinguish the contributions. First, MamT4 excludes BI-RADS~3 cases from evaluation whereas \mamnet{} retains them as negatives, making the test set strictly harder and the two AUROC values not directly comparable. Second, \mamnet{} contributes a controlled ablation study that isolates the effect of multi-view fusion, regularisation, spatial cross-attention, and ensemble size---components that MamT4 does not systematically ablate. Third, \mamnet{} adds uncertainty quantification (Stage~4) and a hybrid triage simulation (Stage~6) grounded in a published clinical framework \cite{12}, enabling a workload-reduction analysis that MamT4 does not provide. These dimensions complement rather than compete with MamT4's classification performance.
+
 \textbf{Limitations.} (i) Small positive test count (99 pairs) limits fine-grained comparison; (ii) large domain gap to United States FFDM (AUROC=0.6008 on \rsna{}); (iii) MamT4 comparison uses a slightly different BI-RADS exclusion; (iv) 7,054 non-CC/MLO RSNA images excluded from pair construction.
 
 \textbf{Future work.} (1) Box-dropout or test-time box injection; (2) CrossView at 512\,px with gradient checkpointing; (3) Validate on CBIS-DDSM and INbreast; (4) Tighter ensemble of +reg BreastPairNet + best CrossView + asymmetry; (5) Fine-tune on RSNA training pairs; (6) Prospective triage study with real reader sensitivity data.
@@ -1002,7 +1004,7 @@ We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on
 \textbf{Oscar Meruvia-Pastor:} Supervision, Writing -- review \& editing.\\
 \textbf{Edward Kendall:} Supervision, Writing -- review \& editing.
 
-\newpage
+\balance
 \begin{thebibliography}{99}
 
 \bibitem{1} H. T. Nguyen et al., ``\vindr{}: A large-scale benchmark dataset for computer-aided diagnosis in full-field digital mammography,'' \emph{Scientific Data}, vol.~10, no.~277, 2023.
