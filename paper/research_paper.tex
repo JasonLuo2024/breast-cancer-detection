@@ -97,10 +97,10 @@
 \textbf{Materials and Methods:} We trained five single-view CNN backbones (Stage~1), a shared-backbone BreastPairNet multi-view network across twelve backbone$\times$fusion$\times$resolution variants (Stage~2), a CrossView Transformer with spatial cross-attention (Stage~3), and a bounding-box annotation ablation study (Stage~3b). We then applied Monte Carlo (MC) Dropout for uncertainty quantification (Stage~4), assembled a 16-model ensemble with test-time augmentation (TTA) (Stage~5), and evaluated a Verboom-style hybrid triage simulation (Stage~6). External zero-shot validation was performed on the \rsna{} dataset.
 
 \smallskip
-\textbf{Results:} DenseNet-121 attained AUROC=0.7564 (Stage~1). BreastPairNet improved to AUROC=0.8256 (+9.1\%, Stage~2); CrossView Transformer reached AUROC=0.8317 (+10.0\%, Stage~3). Bounding-box annotations degraded AUROC by 0.12--0.20. The 16-model ensemble achieved AUROC=0.8458 (+11.8\%) with sensitivity at 90\% specificity (S@90\%spec)=0.6566. Hybrid triage at 50\% AI reads preserved 87.9\% sensitivity under oracle conditions. External \rsna{} AUROC=0.6008.
+\textbf{Results:} DenseNet-121 attained AUROC=0.7564 (Stage~1). BreastPairNet improved to AUROC=0.8256 [95\,\% CI 0.776--0.871] (+9.1\%, Stage~2); CrossView Transformer reached AUROC=0.8317 [0.783--0.875] (+10.0\%, Stage~3). Adjacent-stage differences lie within overlapping confidence intervals; the ensemble's cumulative gain over Stage~1 is the most statistically robust comparison. Bounding-box annotations degraded AUROC by 0.12--0.20. The 16-model ensemble achieved AUROC=0.8458 (+11.8\% vs Stage~1) with S@90\%spec=0.6566 and PPV=0.184 at the triage threshold. Hybrid triage at 50\% AI reads preserved 87.9\% sensitivity under oracle conditions. External \rsna{} AUROC=0.6008.
 
 \smallskip
-\textbf{Conclusion:} A six-stage multi-view pipeline achieves AUROC=0.8458 on \vindr{}. Bounding-box shortcut learning is a key negative finding; domain generalisation to the \rsna{} dataset remains an open challenge.
+\textbf{Conclusion:} A six-stage multi-view pipeline achieves AUROC=0.8458 (PPV=0.184) on \vindr{}. Stage-to-stage AUROC gains are consistent but individually within bootstrap sampling noise; the pipeline's value lies in its cumulative 11.8\% improvement over single-view CNN and in the negative findings. Bounding-box shortcut learning is a key negative finding; domain generalisation to the \rsna{} dataset remains an open challenge.
 \end{tcolorbox}
 \smallskip
 \noindent\textbf{Keywords:} breast cancer detection; mammography; \mamnet{}; multi-view learning; uncertainty quantification; triage; \vindr{}.
@@ -384,7 +384,7 @@ Following Verboom et al.\ \cite{12}, cases are sorted by ascending predictive en
 
 \subsection{Training and evaluation}
 
-All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with FP16 mixed-precision (AMP) and AdamW (weight decay 1e-4 for Stage~1; 1e-3 for Stage~2). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, and \textbf{\satninety{}} (sensitivity at 90\% specificity). 95\% percentile bootstrap confidence intervals ($n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive). Typical AUROC CI width: $\pm$0.04--0.05.
+All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with FP16 mixed-precision (AMP) and AdamW (weight decay 1e-4 for Stage~1; 1e-3 for Stage~2). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, \textbf{\satninety{}} (sensitivity at 90\% specificity), and \textbf{PPV} (positive predictive value, precision at the Youden-optimal threshold). 95\% percentile bootstrap confidence intervals ($n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive). Typical AUROC CI width: $\pm$0.04--0.05. Because all models are evaluated on the same 2,000 test pairs, paired bootstrap resampling is more statistically powerful than independent CIs for head-to-head model comparisons.
 
 \section{Experiments and Results}
 
@@ -446,23 +446,24 @@ The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.
 \centering
 \caption{BreastPairNet ablation across backbone, fusion, and resolution.}
 \label{tab:breastpairnet}
-\begin{tabular}{@{}p{0.22\textwidth} p{0.09\textwidth} p{0.08\textwidth} p{0.20\textwidth} p{0.07\textwidth} p{0.07\textwidth} p{0.15\textwidth}@{}}
+\begin{tabular}{@{}p{0.20\textwidth} p{0.08\textwidth} p{0.07\textwidth} p{0.18\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.05\textwidth} p{0.15\textwidth}@{}}
 \toprule
-Architecture & Fusion & Image & Best AUROC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
+Architecture & Fusion & Image & Best AUROC [95\% CI] & F1 & Sens & PPV & S@90\% [95\% CI] \\
 \midrule
-ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.2350 & 0.5354 & 0.4646 [0.3736--0.5673] \\
-ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.2522 & 0.5859 & 0.5051 [0.4023--0.6019] \\
-ResNet-50 & attention & 512 px & 0.7922 [0.7339--0.8429] & 0.2093 & 0.7475 & 0.5152 [0.4130--0.6214] \\
-ResNet-50 & concat & 224 px & 0.7962 [0.7428--0.8445] & 0.2363 & 0.6970 & 0.4949 [0.3958--0.5977] \\
-DenseNet-121 & attention & 224 px & 0.8014 [0.7487--0.8515] & 0.2800 & 0.6364 & 0.5758 [0.4660--0.6667] \\
-EfficientNet-B3 & attention & 224 px & 0.8048 [0.7530--0.8556] & 0.2138 & 0.7677 & 0.5455 [0.4476--0.6449] \\
-DenseNet-121 & concat & 224 px & 0.8073 [0.7577--0.8504] & 0.2101 & 0.7374 & 0.5152 [0.4141--0.6100] \\
-DenseNet-121 \textbf{+reg} & attention & 224 px & 0.8097 [0.7594--0.8591] & 0.2033 & 0.7980 & 0.5556 [0.4301--0.6458] \\
-DenseNet-121 & attention & 512 px & 0.8150 [0.7675--0.8617] & 0.1928 & 0.8081 & 0.5455 [0.4476--0.6408] \\
-DenseNet-121 \textbf{+reg} & concat & 224 px & 0.8177 [0.7659--0.8649] & 0.2357 & 0.7677 & 0.6061 [0.5047--0.7000] \\
-EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273 & 0.5556 [0.4495--0.6505] \\
-\textbf{EfficientNet-B3 +reg} & \textbf{attention} & \textbf{224 px} & \textbf{0.8256 [0.7755--0.8707]} & \textbf{0.3701} & \textbf{0.6263} & \textbf{0.6263 [0.5229--0.7143]} \\
+ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.2350 & 0.5354 & 0.151 & 0.4646 [0.3736--0.5673] \\
+ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.2522 & 0.5859 & 0.161 & 0.5051 [0.4023--0.6019] \\
+ResNet-50 & attention & 512 px & 0.7922 [0.7339--0.8429] & 0.2093 & 0.7475 & 0.122 & 0.5152 [0.4130--0.6214] \\
+ResNet-50 & concat & 224 px & 0.7962 [0.7428--0.8445] & 0.2363 & 0.6970 & 0.142 & 0.4949 [0.3958--0.5977] \\
+DenseNet-121 & attention & 224 px & 0.8014 [0.7487--0.8515] & 0.2800 & 0.6364 & 0.179 & 0.5758 [0.4660--0.6667] \\
+EfficientNet-B3 & attention & 224 px & 0.8048 [0.7530--0.8556] & 0.2138 & 0.7677 & 0.124 & 0.5455 [0.4476--0.6449] \\
+DenseNet-121 & concat & 224 px & 0.8073 [0.7577--0.8504] & 0.2101 & 0.7374 & 0.122 & 0.5152 [0.4141--0.6100] \\
+DenseNet-121 \textbf{+reg} & attention & 224 px & 0.8097 [0.7594--0.8591] & 0.2033 & 0.7980 & 0.117 & 0.5556 [0.4301--0.6458] \\
+DenseNet-121 & attention & 512 px & 0.8150 [0.7675--0.8617] & 0.1928 & 0.8081 & 0.109 & 0.5455 [0.4476--0.6408] \\
+DenseNet-121 \textbf{+reg} & concat & 224 px & 0.8177 [0.7659--0.8649] & 0.2357 & 0.7677 & 0.139 & 0.6061 [0.5047--0.7000] \\
+EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273 & 0.160 & 0.5556 [0.4495--0.6505] \\
+\textbf{EfficientNet-B3 +reg} & \textbf{attention} & \textbf{224 px} & \textbf{0.8256 [0.7755--0.8707]} & \textbf{0.3701} & \textbf{0.6263} & \textbf{0.263} & \textbf{0.6263 [0.5229--0.7143]} \\
 \bottomrule
+\multicolumn{8}{@{}p{0.96\textwidth}@{}}{\small PPV = TP/(TP+FP) at the Youden-optimal threshold. At 4.95\% prevalence, PPV is inherently low; higher PPV reflects a more conservative threshold (lower sensitivity). All CIs via 2,000-resample percentile bootstrap on the 2,000-pair test split.}
 \end{tabular}
 \end{table*}
 
@@ -572,15 +573,15 @@ Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:
 \caption{CrossView Transformer results without bounding-box annotation.}
 \label{tab:crossview}
 {\small\setlength{\tabcolsep}{4pt}%
-\begin{tabular}{@{}p{0.21\textwidth} p{0.11\textwidth} p{0.22\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.21\textwidth}@{}}
+\begin{tabular}{@{}p{0.19\textwidth} p{0.10\textwidth} p{0.20\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.20\textwidth}@{}}
 \toprule
-Architecture & Training data & Best AUROC [95\% CI] & F1 & Sens & S@90\% [95\% CI] \\
+Architecture & Training data & Best AUROC [95\% CI] & F1 & Sens & PPV & S@90\% [95\% CI] \\
 \midrule
-DenseNet-121 (medical init) & VinDr & 0.7648 [0.7116--0.8210] & 0.2374 & 0.5960 & 0.5051 [0.4020--0.6100] \\
-EfficientNet-B3 & VinDr & 0.7795 [0.7276--0.8300] & 0.2022 & 0.7273 & 0.4545 [0.3474--0.5500] \\
-DenseNet-121 & VinDr & 0.7874 [0.7299--0.8401] & 0.2678 & 0.6465 & 0.5556 [0.4474--0.6482] \\
-DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.5354 [0.4433--0.6404] \\
-\textbf{ConvNeXt-Base} & \textbf{VinDr} & \textbf{0.8317 [0.7832--0.8753]} & \textbf{0.2587} & \textbf{0.7475} & \textbf{0.5758 [0.4737--0.6768]} \\
+DenseNet-121 (medical init) & VinDr & 0.7648 [0.7116--0.8210] & 0.2374 & 0.5960 & 0.148 & 0.5051 [0.4020--0.6100] \\
+EfficientNet-B3 & VinDr & 0.7795 [0.7276--0.8300] & 0.2022 & 0.7273 & 0.117 & 0.4545 [0.3474--0.5500] \\
+DenseNet-121 & VinDr & 0.7874 [0.7299--0.8401] & 0.2678 & 0.6465 & 0.169 & 0.5556 [0.4474--0.6482] \\
+DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.165 & 0.5354 [0.4433--0.6404] \\
+\textbf{ConvNeXt-Base} & \textbf{VinDr} & \textbf{0.8317 [0.7832--0.8753]} & \textbf{0.2587} & \textbf{0.7475} & \textbf{0.156} & \textbf{0.5758 [0.4737--0.6768]} \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -733,12 +734,13 @@ Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three br
 \centering
 \caption{Best ensemble result (mean probability, TTA$\times$5).}
 \label{tab:ensemble}
-\begin{tabular}{@{}p{0.20\textwidth} ccccccc@{}}
+\begin{tabular}{@{}p{0.20\textwidth} cccccccc@{}}
 \toprule
-Method & AUROC & Sens & Spec & F1 & S@90\% & S@95\% & Threshold \\
+Method & AUROC & Sens & Spec & F1 & PPV & S@90\% & S@95\% & Threshold \\
 \midrule
-\textbf{Ensemble (N=16, TTA=5)} & \textbf{0.8458} & \textbf{0.7374} & \textbf{0.8296} & \textbf{0.2944} & \textbf{0.6566} & \textbf{0.5657} & \textbf{0.3414} \\
+\textbf{Ensemble (N=16, TTA=5)} & \textbf{0.8458} & \textbf{0.7374} & \textbf{0.8296} & \textbf{0.2944} & \textbf{0.184} & \textbf{0.6566} & \textbf{0.5657} & \textbf{0.3414} \\
 \bottomrule
+\multicolumn{9}{@{}p{0.96\textwidth}@{}}{\small PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).}
 \end{tabular}
 \end{table*}
 
@@ -979,11 +981,19 @@ Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best o
 
 \textbf{Bounding-box shortcut learning.} Painted boxes provide a texture shortcut perfectly correlated with the cancer label during training but absent at test time. This pattern is consistent with well-documented shortcut learning phenomena in medical imaging. Potential remedies may include box-dropout regularisation or test-time box injection via a lesion detector.
 
+\textbf{Why adding the highest-AUROC model to the ensemble can reduce AUROC.} Adding ConvNeXt-Base (the highest individual AUROC, 0.8317) to the 16-model BreastPairNet ensemble reduces overall AUROC from 0.8458 to 0.8441 (\autoref{tab:ensemble-comparison}). This is a well-known property of ensemble methods: performance gain comes from \emph{error diversity}, not from constituent model rank. ConvNeXt-Base shares the CrossView Transformer architecture with the DenseNet-121 and EfficientNet-B3 CrossView members already present in the expanded ensemble; its error profile is therefore correlated with those members, contributing no new coverage of failure modes. Additionally, mean-probability pooling is sensitive to score miscalibration: a model whose probability outputs are systematically over- or under-confident can shift the pooled mean away from the Youden-optimal threshold for the ensemble, reducing AUC even when the individual model's rank ordering is strong. The selective ensemble in \autoref{tab:ensemble-comparison} partially mitigates this by prioritising diversity (three +reg BreastPairNet, five CrossView, three asymmetry models) over including the single best-ranked model.
+
+\textbf{PPV and triage utility.} PPV at the Youden threshold ranges from 0.109 to 0.263 across Stage~2 models and 0.117 to 0.169 across Stage~3 models, consistent with the 4.95\% positive prevalence in \vindr{}. The ensemble achieves PPV=0.184 (73 true positives, 324 false positives at threshold 0.3414). In a triage context, PPV governs recall burden: at PPV=0.184, approximately 1 in 5.4 AI-flagged cases is cancer-positive, comparable to published AI-assisted triage operating points (PPV 15--25\% at high-sensitivity settings). Screening prevalence is typically lower than \vindr{}'s 4.95\%, so deployed PPV would be correspondingly lower; calibrated probability outputs and threshold adjustment for local prevalence would be required before clinical application.
+
 \textbf{MC Dropout uncertainty.} The +0.003 AUROC gain from MC Dropout is within the 95\% percentile bootstrap CI and should not be over-interpreted. The more clinically meaningful finding is the sensitivity boost (+3.0 percentage points, AUROC 0.8073$\to$0.8099) and the 0.056-nat entropy gap between cancer-positive and cancer-negative classes, which enables the Stage~6 triage protocol.
 
 \textbf{Triage simulation.} Under realistic 85\% radiologist sensitivity \cite{17}, K=50\% yields only 77.3\% overall sensitivity---10.6 percentage points below the oracle result (87.9\%). These simulations suggest K$\leq$40\% may be required to maintain overall sensitivity above the 80\% clinical floor; prospective validation with real reader sensitivity data would be needed to confirm these thresholds.
 
-\textbf{Confidence intervals.} With only 99 cancer-positive test pairs, percentile bootstrap CI width is $\pm$0.04--0.05 AUROC. Differences of less than 0.01 AUROC should be treated as within sampling noise. BreastPairNet (AUROC=0.8256, 95\% CI 0.7755--0.8707) and CrossView Transformer (AUROC=0.8317, 95\% CI 0.7832--0.8753) are not statistically separated.
+\textbf{Statistical comparisons and paired testing.} With only 99 cancer-positive test pairs, the 95\% percentile bootstrap CI width is $\pm$0.04--0.05 AUROC, so \emph{adjacent-stage} differences cannot be claimed as individually significant: Stage~2 vs Stage~3 ($\Delta=0.006$), Stage~3 vs ensemble ($\Delta=0.014$), and BreastPairNet vs CrossView Transformer (95\% CIs 0.776--0.871 vs 0.783--0.875) all have substantially overlapping intervals. The percentage gains throughout this paper (+9.1\%, +10.0\%, +11.8\%) describe observed AUROC changes and should be read alongside the confidence intervals rather than as confirmed step-wise improvements.
+
+Because all models were evaluated on the \emph{same} 2,000 test pairs, \emph{paired} bootstrap resampling---which accounts for within-pair correlation and yields narrower confidence intervals---is the appropriate test for comparing models in this study. Under paired resampling, the ensemble's cumulative gain over Stage~1 DenseNet-121 ($\Delta=0.089$ AUROC) is expected to reach statistical separation; adjacent-stage gains, being an order of magnitude smaller, are unlikely to survive even paired testing given the positive-pair count. Formal paired bootstrap tests will be reported alongside the retrained model results.
+
+The key statistical claim of this paper is therefore not that each pipeline stage is individually significantly better than the previous, but rather that the full pipeline cumulatively and substantially improves upon single-view CNN baselines, and that the ablation study identifies which components contribute positively or negatively to that gain.
 
 \textbf{Contribution relative to MamT4.} A reviewer might ask whether \mamnet{} offers meaningful progress given that MamT4 \cite{18} reports AUROC=0.840 on \vindr{}. Three points distinguish the contributions. First, MamT4 excludes BI-RADS~3 cases from evaluation whereas \mamnet{} retains them as negatives, making the test set strictly harder and the two AUROC values not directly comparable. Second, \mamnet{} contributes a controlled ablation study that isolates the effect of multi-view fusion, regularisation, spatial cross-attention, and ensemble size---components that MamT4 does not systematically ablate. Third, \mamnet{} adds uncertainty quantification (Stage~4) and a hybrid triage simulation (Stage~6) grounded in a published clinical framework \cite{12}, enabling a workload-reduction analysis that MamT4 does not provide. These dimensions complement rather than compete with MamT4's classification performance.
 
