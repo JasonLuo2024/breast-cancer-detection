@@ -1,0 +1,116 @@
+\documentclass[10pt,letterpaper]{article}
+
+\usepackage[top=1in,bottom=1in,left=1in,right=1in]{geometry}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{titling}
+\usepackage{authblk}
+\usepackage{hyperref}
+\hypersetup{colorlinks=false,hidelinks}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% Title formatting to match NECEC template
+\pretitle{\begin{center}\fontsize{14}{16}\selectfont\bfseries}
+\posttitle{\par\end{center}\vspace{2pt}}
+\preauthor{\begin{center}\fontsize{10}{12}\selectfont}
+\postauthor{\end{center}}
+\predate{}
+\postdate{}
+\date{}
+
+\title{MamNet-6: Multi-View Fusion, CrossView Transformer, and
+Uncertainty-Aware Triage for Breast Cancer Detection on VinDr-Mammo}
+
+\author[1]{Haoming Luo}
+\author[1]{Matthew Hamilton}
+\author[1]{Oscar Meruvia-Pastor}
+\author[1]{Edward Kendall}
+\affil[1]{\small Department of Computer Science, Memorial University,
+St.\ John's, NL, Canada\\
+\texttt{hluo@mun.ca}}
+
+\renewcommand\Affilfont{\small}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\vspace{-8pt}
+
+\noindent\textbf{Keywords:} breast cancer detection, mammography, multi-view
+learning, uncertainty quantification, triage
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\noindent\textbf{Extended Abstract---}Breast cancer is the most commonly
+diagnosed cancer worldwide. Population screening with full-field digital
+mammography (FFDM) reduces mortality but places a heavy radiologist workload
+and substantial inter-reader variability of 10--30 percentage points (Lehman
+et al., 2017). Meta-analyses report pooled AUC of 0.87 for deep learning AI
+versus 0.81 for radiologists on digital mammography (Dembrower et al., 2020).
+Three gaps motivate this work: single-view dominance in published VinDr-Mammo
+results, underexplored spatial cross-view attention, and the absence of
+uncertainty-aware triage simulation on this dataset.
+
+We developed MamNet-6, a six-stage pipeline evaluated on VinDr-Mammo (Nguyen
+et al., 2023), a 20,000-image Vietnamese FFDM benchmark. Each stage extends
+the previous: Stage~1 establishes CNN baselines across five backbones;
+Stage~2 introduces BreastPairNet, a shared-backbone multi-view network fusing
+CC and MLO views across twelve backbone$\times$fusion$\times$resolution
+variants; Stage~3 adds a CrossView Transformer with spatial cross-attention
+between view feature maps before global average pooling; Stage~3b tests
+whether coarse bounding-box annotations help or hurt performance; Stage~4
+applies Monte Carlo (MC) Dropout ($N$=20 stochastic passes) for predictive
+uncertainty quantification; and Stage~5 assembles a 16-model ensemble with
+test-time augmentation (TTA$\times$5). Stage~6 simulates a Verboom-style
+hybrid triage policy (Verboom et al., 2021), routing high-confidence AI reads
+autonomously and referring uncertain cases to a radiologist. External
+zero-shot validation is performed on the RSNA 2022 dataset.
+
+DenseNet-121 achieved AUROC\,=\,0.756 at Stage~1. BreastPairNet improved to
+AUROC\,=\,0.826 [95\,\% CI 0.776--0.871] (+9.1\,\%), and the CrossView
+Transformer reached AUROC\,=\,0.832 [0.783--0.875] (+10.0\,\%).
+Adjacent-stage differences lie within overlapping confidence intervals; the
+cumulative Stage~1$\to$5 gain is the most statistically robust comparison.
+Bounding-box annotations consistently degraded AUROC by 0.12--0.20,
+indicating shortcut learning from coarse localisation labels. The 16-model
+ensemble achieved AUROC\,=\,0.846 (+11.8\,\% vs.\ Stage~1) with sensitivity
+at 90\,\% specificity (S@90\,\%spec)\,=\,0.657 and positive predictive value
+(PPV)\,=\,0.184 at the triage threshold. Hybrid triage at 50\,\% AI reads
+preserved 87.9\,\% sensitivity under oracle conditions. Zero-shot transfer to
+RSNA 2022 yielded AUROC\,=\,0.601, highlighting a large domain gap between
+Vietnamese and North American screening populations.
+
+MamNet-6 contributes a systematic ablation across six design
+decisions---backbone, multi-view fusion, spatial cross-attention, uncertainty
+quantification, ensemble construction, and clinical triage simulation---on a
+single large FFDM benchmark, delivering a cumulative 11.8\,\% AUROC gain over
+single-view CNN. Two key negative findings emerge: bounding-box shortcut
+learning degrades performance, and domain generalisation to unseen screening
+populations remains an open challenge.
+
+\vspace{6pt}
+\noindent\textbf{References}
+
+\vspace{2pt}
+\noindent Dembrower, K.\ et al.\ (2020). Effect of AI-supported screening on
+interval cancers in mammography. \textit{Lancet Oncology}.
+
+\noindent Lehman, C.\ et al.\ (2017). National performance benchmarks for
+modern screening digital mammography. \textit{Radiology}.
+
+\noindent Nguyen, H.\ et al.\ (2023). VinDr-Mammo: A large-scale benchmark
+dataset for computer-aided detection and diagnosis in full-field digital
+mammography. \textit{Scientific Data}.
+
+\noindent Verboom, P.\ et al.\ (2021). Standalone AI for triage in breast
+cancer screening. \textit{Radiology}.
+
+\end{document}
