@@ -15,7 +15,7 @@
 \pgfplotsset{compat=1.18, every axis/.append style={font=\footnotesize},
   every tick label/.append style={font=\footnotesize},
   every axis legend/.append style={font=\footnotesize}}
-\usetikzlibrary{positioning, arrows.meta}
+\usetikzlibrary{positioning, arrows.meta, patterns}
 \usepackage{xurl}
 \usepackage{hyperref}
 \hypersetup{colorlinks=false,hidelinks}
@@ -23,7 +23,19 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 % Colors
-\definecolor{radblue}{RGB}{0,73,144}
+% One palette for all figures (validated: colour-blind safe; orange is
+% always paired with hatching or a distinct marker for grayscale print)
+\definecolor{vizblue}{HTML}{2A78D6}   % main / proposed series
+\definecolor{vizorange}{HTML}{EB6834} % second series; callouts in diagrams
+\definecolor{vizbase}{HTML}{C9C7C2}   % baseline / comparison
+\definecolor{vizink}{HTML}{52514E}    % muted annotation text
+% Diagram box roles
+\colorlet{dgInput}{vizblue!10}
+\colorlet{dgNet}{vizblue!28}
+\colorlet{dgFeat}{black!6}
+\colorlet{dgFuse}{vizblue!16}
+\colorlet{dgOut}{vizblue!42}
+\colorlet{dgNote}{vizorange!14}
 
 % Float placement parameters for twocolumn mode
 \setcounter{dbltopnumber}{4}
@@ -204,19 +216,19 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 \begin{figure*}[!t]
 \centering
 \begin{tikzpicture}[
-  imgb/.style={draw, fill=blue!12, rounded corners=2pt,
+  imgb/.style={draw, fill=dgInput, rounded corners=2pt,
                minimum width=1.6cm, minimum height=0.8cm, font=\small\bfseries, align=center},
-  netb/.style={draw, fill=radblue!18, rounded corners=3pt,
+  netb/.style={draw, fill=dgNet, rounded corners=3pt,
                minimum width=2.2cm, minimum height=2.4cm, font=\small, align=center},
-  gapb/.style={draw, fill=orange!20, rounded corners=2pt,
+  gapb/.style={draw, fill=dgNote, rounded corners=2pt,
                minimum width=1.4cm, minimum height=0.6cm, font=\footnotesize\bfseries, align=center},
-  featb/.style={draw, fill=gray!13, rounded corners=2pt,
+  featb/.style={draw, fill=dgFeat, rounded corners=2pt,
                 minimum width=1.6cm, minimum height=0.65cm, font=\small, align=center},
-  fusb/.style={draw, fill=teal!15, rounded corners=3pt,
+  fusb/.style={draw, fill=dgFuse, rounded corners=3pt,
                minimum width=2.0cm, minimum height=2.2cm, font=\small, align=center},
-  mlpb/.style={draw, fill=purple!10, rounded corners=2pt,
+  mlpb/.style={draw, fill=dgFuse, rounded corners=2pt,
                minimum width=1.5cm, minimum height=0.65cm, font=\small, align=center},
-  outb/.style={draw, fill=green!12, rounded corners=2pt,
+  outb/.style={draw, fill=dgOut, rounded corners=2pt,
                minimum width=1.6cm, minimum height=0.65cm, font=\small\bfseries, align=center},
   arr/.style={->, >=Latex, thick},
 ]
@@ -232,13 +244,13 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
   (cc.south) -- node[right, font=\footnotesize, gray, align=left] {shared\\weights $\theta$} (mlo.north);
 
 % GAP boxes (explicit, highlighted — this is the key Stage 2 design choice)
-\node[gapb] (gap_cc)  at (5.8,  1.0) {Global\\avg pool};
-\node[gapb] (gap_mlo) at (5.8, -1.0) {Global\\avg pool};
+\node[gapb] (gap_cc)  at (6.3,  1.0) {Global\\avg pool};
+\node[gapb] (gap_mlo) at (6.3, -1.0) {Global\\avg pool};
 
 % Dashed region highlighting GAP as the Stage 2 design choice
-\draw[dashed, orange!55, thick, rounded corners=5pt]
-  (5.0, -1.55) rectangle (6.6, 1.55);
-\node[font=\footnotesize, orange!70!black, align=center, text width=3cm] at (5.8, -2.1)
+\draw[dashed, vizorange, thick, rounded corners=5pt]
+  (5.45, -1.55) rectangle (7.15, 1.55);
+\node[font=\footnotesize, black, align=center, text width=3cm] at (6.3, -2.1)
   {\textbf{Stage~3 replaces here:}\\spatial cross-attention\\before pooling (Fig.~\ref{fig:crossview-arch})};
 
 % Feature vectors
@@ -259,8 +271,8 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 \draw[arr] (mlo.east) to[out=0, in=210] (bb.south west);
 
 % Arrows: backbone → GAP
-\draw[arr] (bb.east) -- +(0.5, 0) |- (gap_cc.west);
-\draw[arr] (bb.east) -- +(0.5, 0) |- (gap_mlo.west);
+\draw[arr] (bb.east) -- +(0.3, 0) |- (gap_cc.west);
+\draw[arr] (bb.east) -- +(0.3, 0) |- (gap_mlo.west);
 
 % Arrows: GAP → feature vectors
 \draw[arr] (gap_cc.east)  -- (fcc.west);
@@ -286,15 +298,15 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 \begin{figure*}[!t]
 \centering
 \begin{tikzpicture}[
-  imgb/.style={draw, fill=blue!12, rounded corners=2pt,
+  imgb/.style={draw, fill=dgInput, rounded corners=2pt,
                minimum width=1.4cm, minimum height=0.75cm, font=\small\bfseries, align=center},
-  netb/.style={draw, fill=radblue!18, rounded corners=3pt,
+  netb/.style={draw, fill=dgNet, rounded corners=3pt,
                minimum width=2.0cm, minimum height=2.3cm, font=\small, align=center},
-  mapb/.style={draw, fill=gray!13, rounded corners=2pt,
+  mapb/.style={draw, fill=dgFeat, rounded corners=2pt,
                minimum width=1.5cm, minimum height=0.65cm, font=\small, align=center},
-  attnb/.style={draw, fill=teal!15, rounded corners=3pt,
+  attnb/.style={draw, fill=dgFuse, rounded corners=3pt,
                 minimum width=2.2cm, minimum height=2.8cm, font=\small, align=center},
-  outb/.style={draw, fill=green!12, rounded corners=3pt,
+  outb/.style={draw, fill=dgOut, rounded corners=3pt,
                minimum width=1.5cm, minimum height=2.0cm, font=\small, align=center},
   arr/.style={->, >=Latex, thick},
 ]
@@ -314,8 +326,8 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 \node[font=\footnotesize, gray] at (8.5, -1.55) {flatten};
 
 % Token sequences
-\node[mapb, fill=gray!10, minimum width=1.6cm] (tok_cc)  at (8.5,  1.0) {Tokens\\$HW{\times}C$};
-\node[mapb, fill=gray!10, minimum width=1.6cm] (tok_mlo) at (8.5, -1.0) {Tokens\\$HW{\times}C$};
+\node[mapb, fill=dgFeat, minimum width=1.6cm] (tok_cc)  at (8.5,  1.0) {Tokens\\$HW{\times}C$};
+\node[mapb, fill=dgFeat, minimum width=1.6cm] (tok_mlo) at (8.5, -1.0) {Tokens\\$HW{\times}C$};
 
 % Cross-attention Transformer
 \node[attnb] (attn) at (11.5, 0) {Cross-view\\Transformer\\(2 layers)\\[0.4em]
@@ -345,7 +357,7 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 \draw[arr] (attn.east) -- (out.west);
 
 % Key difference annotation
-\node[font=\footnotesize, draw, rounded corners, fill=yellow!15, align=center,
+\node[font=\footnotesize, draw, rounded corners, fill=dgNote, align=center,
       text width=2.8cm] at (5.5, -2.4)
   {\textbf{Key difference vs BreastPairNet:}\\spatial maps before pooling};
 \end{tikzpicture}
@@ -416,7 +428,7 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
     every node near coord/.append style={font=\footnotesize, yshift=2pt},
     enlarge x limits=0.12,
 ]
-\addplot[fill=radblue!50] coordinates {
+\addplot[fill=vizblue, draw=vizblue] coordinates {
     (VGG19,        0.7066)
     (ResNet-50,    0.7286)
     (EffNet-B3,    0.7330)
@@ -486,7 +498,7 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
     mark size=1.8pt,
 ]
 % BreastPairNet EffB3 +reg (Stage 2 best)
-\addplot[radblue, mark=*, thick] coordinates {
+\addplot[vizblue, mark=*, thick] coordinates {
     (1,0.5819)(2,0.6139)(3,0.6205)
     (4,0.7435)(5,0.7880)(6,0.7978)(7,0.8256)
     (8,0.7726)(9,0.7846)(10,0.7715)(11,0.7686)(12,0.7891)
@@ -495,7 +507,7 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
     (23,0.7692)(24,0.7743)(25,0.7649)
 };
 % CrossView ConvNeXt-Base (Stage 3 best)
-\addplot[red!70!black, mark=square*, thick] coordinates {
+\addplot[vizorange, mark=square*, thick] coordinates {
     (1,0.7142)(2,0.7469)(3,0.7668)(4,0.7790)
     (5,0.7934)(6,0.7427)(7,0.8263)(8,0.8317)
     (9,0.7930)(10,0.8083)(11,0.7800)(12,0.7823)(13,0.7676)
@@ -505,14 +517,14 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
     (29,0.6673)(30,0.6686)
 };
 % Stars at best epochs
-\addplot[only marks, mark=star, mark size=5pt, radblue, forget plot]
+\addplot[only marks, mark=star, mark size=5pt, vizblue, forget plot]
     coordinates {(7,0.8256)};
-\addplot[only marks, mark=star, mark size=5pt, red!70!black, forget plot]
+\addplot[only marks, mark=star, mark size=5pt, vizorange, forget plot]
     coordinates {(8,0.8317)};
 % Vertical dashed line: EffB3 backbone unfreeze (epoch 4)
-\addplot[dashed, radblue!50, thin, forget plot] coordinates {(4,0.53)(4,0.86)};
+\addplot[dashed, vizblue, thin, forget plot] coordinates {(4,0.53)(4,0.86)};
 % Vertical dashed line: ConvNeXt backbone unfreeze (epoch 5)
-\addplot[dashed, red!40, thin, forget plot] coordinates {(5,0.53)(5,0.86)};
+\addplot[dashed, vizorange, thin, forget plot] coordinates {(5,0.53)(5,0.86)};
 \legend{Stage 2: EfficientNet-B3 +reg (best 0.8256 at epoch 7), Stage 3: ConvNeXt-Base (best 0.8317 at epoch 8)}
 \end{axis}
 \end{tikzpicture}
@@ -559,10 +571,10 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
     every node near coord/.append style={font=\footnotesize, rotate=90, anchor=west, xshift=1pt},
     enlarge x limits=0.25,
 ]
-\addplot[fill=gray!40] coordinates {
+\addplot[fill=vizbase, draw=vizbase!60!black] coordinates {
     (DN121/concat, 0.8073)(DN121/attn, 0.8014)(EffB3/attn, 0.8048)
 };
-\addplot[fill=radblue!60] coordinates {
+\addplot[fill=vizblue, draw=vizblue] coordinates {
     (DN121/concat, 0.8177)(DN121/attn, 0.8097)(EffB3/attn, 0.8256)
 };
 \legend{Base, {+reg}}
@@ -643,10 +655,10 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
     every node near coord/.append style={font=\footnotesize, rotate=90, anchor=west, xshift=1pt},
     enlarge x limits=0.15,
 ]
-\addplot[fill=radblue!50] coordinates {
+\addplot[fill=vizblue, draw=vizblue] coordinates {
     (DN121, 0.7874)(DN121-RSNA, 0.8028)(DN121-med, 0.7648)(EffB3, 0.7795)
 };
-\addplot[fill=red!50] coordinates {
+\addplot[fill=vizorange, draw=vizorange, postaction={pattern=north east lines, pattern color=white}] coordinates {
     (DN121, 0.5862)(DN121-RSNA, 0.6675)(DN121-med, 0.6433)(EffB3, 0.6020)
 };
 \legend{No annotation, With annotation}
@@ -659,11 +671,11 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \begin{figure*}[!t]
 \centering
 \begin{tikzpicture}[
-  mainb/.style={draw, fill=radblue!15, rounded corners=3pt,
+  mainb/.style={draw, fill=dgInput, rounded corners=3pt,
                 minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
-  passb/.style={draw, fill=gray!10, rounded corners=2pt,
+  passb/.style={draw, fill=dgFeat, rounded corners=2pt,
                 minimum width=3.2cm, minimum height=0.65cm, font=\small, align=center},
-  calcb/.style={draw, fill=teal!12, rounded corners=2pt,
+  calcb/.style={draw, fill=dgFuse, rounded corners=2pt,
                 minimum width=3.6cm, minimum height=0.7cm, font=\small, align=center},
   decb/.style={draw, rounded corners=2pt,
                minimum width=3.0cm, minimum height=0.7cm, font=\small, align=center},
@@ -674,23 +686,23 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \node[mainb] (inp) {Test pair: (CC image, MLO image)};
 
 % Multiple passes -- shown as a box
-\node[mainb, fill=radblue!25, minimum height=1.0cm, below=of inp] (passes)
+\node[mainb, fill=dgNet, minimum height=1.0cm, below=of inp] (passes)
   {$N=20$ stochastic forward passes\\{\scriptsize(Dropout ON, BatchNorm in eval mode)}};
 
 % Probability samples
-\node[mainb, fill=gray!10, below=of passes] (probs)
+\node[mainb, fill=dgFeat, below=of passes] (probs)
   {$p_1,\; p_2,\; \ldots,\; p_{20} \;\in\; [0,1]$};
 
 % Two outputs side-by-side
 \node[calcb, below left=0.8cm and 1.6cm of probs] (meanbox)
   {Mean:\\$\bar{p}=\tfrac{1}{N}\!\sum_{i=1}^{N} p_i$};
-\node[calcb, fill=orange!15, below right=0.8cm and 1.6cm of probs] (entbox)
+\node[calcb, fill=dgFuse, below right=0.8cm and 1.6cm of probs] (entbox)
   {Entropy:\\$H(\bar{p})=-\bar{p}\log\bar{p}-(1\!-\!\bar{p})\log(1\!-\!\bar{p})$};
 
 % Decision boxes
-\node[decb, fill=green!12, below=of meanbox] (classify)
+\node[decb, fill=dgOut, below=of meanbox] (classify)
   {Classify: $\bar{p} > \tau$\\(Youden threshold)};
-\node[decb, fill=red!10, below=of entbox] (refer)
+\node[decb, fill=dgOut, below=of entbox] (refer)
   {Triage: high $H(\bar{p})$\\$\Rightarrow$ refer to radiologist};
 
 % Arrows
@@ -858,14 +870,14 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
     grid=both, grid style={line width=0.2pt, draw=gray!30},
     mark size=2.5pt,
 ]
-\addplot[radblue, mark=*, thick] coordinates {
+\addplot[vizblue, mark=*, thick] coordinates {
     (30,0.9495)(40,0.9192)(50,0.8788)(60,0.8283)(70,0.7677)(80,0.7677)(90,0.7677)
 };
-\addplot[red!70!black, mark=square*, thick] coordinates {
+\addplot[vizorange, mark=square*, thick] coordinates {
     (30,0.8253)(40,0.8071)(50,0.7727)(60,0.7359)(70,0.6935)(80,0.7207)(90,0.7450)
 };
 \addplot[dashed, gray!70, thick, forget plot] coordinates {(25,0.85)(95,0.85)};
-\node[font=\footnotesize, gray!60, anchor=north east] at (axis cs:94,0.846) {85\% floor};
+\node[font=\footnotesize, vizink, anchor=north east] at (axis cs:94,0.846) {85\% floor};
 \legend{Oracle radiologist, 85\% radiologist}
 \end{axis}
 \end{tikzpicture}
@@ -934,7 +946,7 @@ Ours Stage 3 (CrossView) & 0.8317 \\
     every node near coord/.append style={font=\footnotesize, yshift=2pt},
     enlarge x limits=0.15,
 ]
-\addplot[fill=radblue!50] coordinates {
+\addplot[fill=vizblue, draw=vizblue] coordinates {
     (MamT4,    0.840)
     (Stage 1,  0.7564)
     (Stage 2,  0.8256)
