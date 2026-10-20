@@ -8,12 +8,13 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\usepackage{booktabs}
 \usepackage{array}
 \usepackage[section]{placeins}
 \usepackage{stfloats}
 \usepackage{pgfplots}
-\pgfplotsset{compat=1.18, every axis/.append style={font=\small}}
+\pgfplotsset{compat=1.18, every axis/.append style={font=\footnotesize},
+  every tick label/.append style={font=\footnotesize},
+  every axis legend/.append style={font=\footnotesize}}
 \usetikzlibrary{positioning, arrows.meta}
 \usepackage{xurl}
 \usepackage{hyperref}
@@ -31,7 +32,7 @@
 \renewcommand{\textfraction}{0.07}
 
 % Table settings
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.15}
 \emergencystretch=3em
 
@@ -99,26 +100,32 @@ This paper makes seven contributions. First, we present a systematic comparison 
 \centering
 \caption{Summary of the main AUROC results across the six-stage pipeline.}
 \label{tab:key-results}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}llcl@{}}
-\toprule
-Stage & Method & AUROC & vs.\ single-view \\
-\midrule
+{\footnotesize\setlength{\tabcolsep}{2.5pt}%
+\begin{tabular}{|l|>{\raggedright\arraybackslash}p{3.3cm}|c|>{\raggedright\arraybackslash}p{1.55cm}|}
+\hline
+\textbf{Stage} & \textbf{Method} & \textbf{AUROC} & \textbf{vs.\ single-view} \\
+\hline
 Prior work & MamT4 \cite{18} (4-view Transformer)\(\ddagger\) & 0.840 & --- \\
+\hline
 Stage 1 & DenseNet-121 (best single-view) & 0.756 & baseline \\
+\hline
 Stage 2 & EfficientNet-B3 +reg (BreastPairNet) & 0.826 & \textbf{+9.1\%} \\
+\hline
 Stage 3 & ConvNeXt-Base (CrossView Transformer) & 0.832 & \textbf{+10.0\%} \\
+\hline
 Stage 4 & DenseNet-121/concat MC Dropout & 0.810 & sensitivity \(\uparrow\) \\
+\hline
 \textbf{Stage 5} & \textbf{16-model ensemble + TTA\(\times\)5} & \textbf{0.846} & \textbf{+11.8\% \(\star\)} \\
+\hline
 External & \rsna{} (zero-shot transfer) & 0.601 & domain gap \textbf{!} \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
 \begin{figure}[!t]
 \centering
 \fbox{\begin{minipage}{0.94\linewidth}
-\small
+\small\raggedright
 \textbf{Input:} 20,000 \vindr{} DICOM images from 5,000 patients.\\[0.2em]
 \textbf{Preprocessing:} DICOM decoding, percentile clipping, CLAHE, orientation normalisation.\\[0.2em]
 \textbf{Stage 1:} single-view CNN baselines, best \(\auc=0.7564\).\\
@@ -132,10 +139,6 @@ External & \rsna{} (zero-shot transfer) & 0.601 & domain gap \textbf{!} \\
 \caption{\mamnet{}: overview of the six-stage breast cancer detection pipeline.}
 \label{fig:pipeline}
 \end{figure}
-
-
-
-
 
 \section{Related Work}
 
@@ -155,21 +158,26 @@ External & \rsna{} (zero-shot transfer) & 0.601 & domain gap \textbf{!} \\
 
 \vindr{} \cite{1} is a Vietnamese FFDM benchmark containing 20,000 images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations (\autoref{tab:birads-distribution}).
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
 \caption{BI-RADS distribution in \vindr{} and binary label mapping.}
 \label{tab:birads-distribution}
-\begin{tabular}{@{}lll@{}}
-\toprule
-BI-RADS & Images & Binary label \\
-\midrule
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{BI-RADS} & \textbf{Images} & \textbf{Binary label} \\
+\hline
 1 & 14,036 & negative \\
+\hline
 2 & 4,144 & negative \\
+\hline
 3 & 832 & negative \\
+\hline
 4 & 824 & \textbf{positive} \\
+\hline
 5 & 164 & \textbf{positive} \\
+\hline
 \textbf{Total} & \textbf{20,000} & 988 positive (4.94\%) \\
-\bottomrule
+\hline
 \end{tabular}
 \end{table}
 
@@ -201,7 +209,7 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
   netb/.style={draw, fill=radblue!18, rounded corners=3pt,
                minimum width=2.2cm, minimum height=2.4cm, font=\small, align=center},
   gapb/.style={draw, fill=orange!20, rounded corners=2pt,
-               minimum width=1.4cm, minimum height=0.6cm, font=\tiny\bfseries, align=center},
+               minimum width=1.4cm, minimum height=0.6cm, font=\footnotesize\bfseries, align=center},
   featb/.style={draw, fill=gray!13, rounded corners=2pt,
                 minimum width=1.6cm, minimum height=0.65cm, font=\small, align=center},
   fusb/.style={draw, fill=teal!15, rounded corners=3pt,
@@ -221,7 +229,7 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 
 % Shared-weight annotation between inputs
 \draw[<->, dashed, gray!55, >=Latex, thick]
-  (cc.south) -- node[right, font=\tiny, gray, align=left] {shared\\weights $\theta$} (mlo.north);
+  (cc.south) -- node[right, font=\footnotesize, gray, align=left] {shared\\weights $\theta$} (mlo.north);
 
 % GAP boxes (explicit, highlighted — this is the key Stage 2 design choice)
 \node[gapb] (gap_cc)  at (5.8,  1.0) {Global\\avg pool};
@@ -230,7 +238,7 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 % Dashed region highlighting GAP as the Stage 2 design choice
 \draw[dashed, orange!55, thick, rounded corners=5pt]
   (5.0, -1.55) rectangle (6.6, 1.55);
-\node[font=\scriptsize, orange!70!black, align=center, text width=3cm] at (5.8, -2.1)
+\node[font=\footnotesize, orange!70!black, align=center, text width=3cm] at (5.8, -2.1)
   {\textbf{Stage~3 replaces here:}\\spatial cross-attention\\before pooling (Fig.~\ref{fig:crossview-arch})};
 
 % Feature vectors
@@ -271,8 +279,6 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 \label{fig:breastpairnet-arch}
 \end{figure*}
 
-
-
 \subsection{CrossView Transformer (Stage 3)}
 
 Replaces global-pooled fusion with spatial cross-attention. Both views pass through the shared CNN backbone to the last spatial feature map; spatial tensors are flattened to tokens and entered into a two-layer Transformer encoder where queries from each view attend to keys/values of the other. Cross-attended outputs are global-averaged and concatenated for the final classifier. \autoref{fig:crossview-arch} contrasts this with BreastPairNet.
@@ -304,8 +310,8 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 \node[mapb] (sm_mlo) at (6.5, -1.0) {Spatial\\map\\$H{\times}W{\times}C$};
 
 % Flatten annotation
-\node[font=\tiny, gray] at (8.5,  1.4) {flatten};
-\node[font=\tiny, gray] at (8.5, -1.4) {flatten};
+\node[font=\footnotesize, gray] at (8.5,  1.55) {flatten};
+\node[font=\footnotesize, gray] at (8.5, -1.55) {flatten};
 
 % Token sequences
 \node[mapb, fill=gray!10, minimum width=1.6cm] (tok_cc)  at (8.5,  1.0) {Tokens\\$HW{\times}C$};
@@ -321,7 +327,7 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 
 % Shared-weight dashed arrow
 \draw[<->, dashed, gray!55, >=Latex, thick]
-  (cc.south) -- node[right, font=\tiny, gray] {tied $\theta$} (mlo.north);
+  (cc.south) -- node[right, font=\footnotesize, gray] {tied $\theta$} (mlo.north);
 
 % Arrows
 \draw[arr] (cc.east)  to[out=0, in=150] (bb.north west);
@@ -339,15 +345,13 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
 \draw[arr] (attn.east) -- (out.west);
 
 % Key difference annotation
-\node[font=\scriptsize, draw, rounded corners, fill=yellow!15, align=center,
+\node[font=\footnotesize, draw, rounded corners, fill=yellow!15, align=center,
       text width=2.8cm] at (5.5, -2.4)
   {\textbf{Key difference vs BreastPairNet:}\\spatial maps before pooling};
 \end{tikzpicture}
 \caption{CrossView Transformer architecture (Stage~3). Unlike BreastPairNet, the backbone output is \emph{not} global-averaged before fusion. Spatial feature maps are flattened to token sequences; a two-layer Transformer encoder applies bidirectional cross-attention ($Q_{CC}$ attends to $K,V$ from MLO and vice versa), enabling the model to localise spatially consistent findings across views before pooling. Best: ConvNeXt-Base, AUROC=0.8317.}
 \label{fig:crossview-arch}
 \end{figure*}
-
-
 
 \subsection{Bounding-box Annotation (Stage 3b)}
 
@@ -377,17 +381,21 @@ DenseNet-121 achieves the best AUROC (0.7564) but only 24.8\% sensitivity at the
 \centering
 \caption{Single-view CNN baselines on \vindr{} (n=16,000 train, n=4,000 test images).}
 \label{tab:single-view}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-Architecture & Image size & Sensitivity & Specificity & F1 & AUROC & S@90\% \\
-\midrule
+{\scriptsize\setlength{\tabcolsep}{2.5pt}%
+\begin{tabular}{|>{\raggedright\arraybackslash}p{1.75cm}|c|c|c|c|c|c|}
+\hline
+\textbf{Architecture} & \textbf{Image size} & \textbf{Sensitivity} & \textbf{Specificity} & \textbf{F1} & \textbf{AUROC} & \textbf{S@90\%} \\
+\hline
 VGG19 & 224 px & 0.2626 & 0.9835 & 0.3323 & 0.7066 & 0.3990 \\
+\hline
 ResNet-50 & 224 px & 0.2677 & 0.9847 & 0.3430 & 0.7286 & 0.4495 \\
+\hline
 EfficientNet-B3 & 224 px & 0.2980 & 0.9687 & 0.3138 & 0.7330 & 0.3990 \\
+\hline
 ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
+\hline
 \textbf{DenseNet-121} & \textbf{224 px} & \textbf{0.2475} & \textbf{0.9882} & \textbf{0.3356} & \textbf{0.7564} & \textbf{0.4444} \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
@@ -397,13 +405,15 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 \begin{axis}[
     ybar, bar width=10pt,
     width=0.88\linewidth, height=4.5cm,
-    ylabel={AUROC}, ymin=0.68, ymax=0.78,
+    ylabel={Area under ROC curve}, ymin=0.68, ymax=0.785,
     ytick={0.68,0.70,0.72,0.74,0.76,0.78},
     xtick=data,
     symbolic x coords={VGG19, ResNet-50, EffNet-B3, ResNet-50*, DenseNet-121},
-    xticklabel style={font=\scriptsize, rotate=20, anchor=north east},
+    xticklabels={VGG19, ResNet-50, EfficientNet-B3, ResNet-50*, DenseNet-121},
+    xticklabel style={rotate=20, anchor=north east},
     nodes near coords, nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize, yshift=2pt},
+    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
+    every node near coord/.append style={font=\footnotesize, yshift=2pt},
     enlarge x limits=0.12,
 ]
 \addplot[fill=radblue!50] coordinates {
@@ -419,10 +429,6 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 \label{fig:stage1-bar}
 \end{figure}
 
-
-
-
-
 \subsection{Stage 2 --- Multi-view BreastPairNet}
 
 The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over DenseNet-121 single-view (\autoref{tab:breastpairnet}). Each row in \autoref{tab:breastpairnet} reports the best-checkpoint result from a single training run evaluated on the held-out test split. Standard deviations across runs are not reported as each configuration was trained once; the 95\% percentile bootstrap CIs quantify test-split sampling variability, not run-to-run variability.
@@ -431,32 +437,38 @@ The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.
 \centering
 \caption{BreastPairNet ablation across backbone, fusion, and resolution.}
 \label{tab:breastpairnet}
-\begin{tabular}{@{}p{0.20\textwidth} p{0.08\textwidth} p{0.07\textwidth} p{0.18\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.05\textwidth} p{0.15\textwidth}@{}}
-\toprule
-Architecture & Fusion & Image & Best AUROC [95\% CI] & F1 & Sens & PPV & S@90\% [95\% CI] \\
-\midrule
+\begin{tabular}{|p{0.20\textwidth}|p{0.08\textwidth}|p{0.07\textwidth}|p{0.18\textwidth}|p{0.06\textwidth}|p{0.06\textwidth}|p{0.05\textwidth}|p{0.15\textwidth}|}
+\hline
+\textbf{Architecture} & \textbf{Fusion} & \textbf{Image} & \textbf{Best AUROC [95\% CI]} & \textbf{F1} & \textbf{Sens} & \textbf{PPV} & \textbf{S@90\% [95\% CI]} \\
+\hline
 ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.2350 & 0.5354 & 0.151 & 0.4646 [0.3736--0.5673] \\
+\hline
 ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.2522 & 0.5859 & 0.161 & 0.5051 [0.4023--0.6019] \\
+\hline
 ResNet-50 & attention & 512 px & 0.7922 [0.7339--0.8429] & 0.2093 & 0.7475 & 0.122 & 0.5152 [0.4130--0.6214] \\
+\hline
 ResNet-50 & concat & 224 px & 0.7962 [0.7428--0.8445] & 0.2363 & 0.6970 & 0.142 & 0.4949 [0.3958--0.5977] \\
+\hline
 DenseNet-121 & attention & 224 px & 0.8014 [0.7487--0.8515] & 0.2800 & 0.6364 & 0.179 & 0.5758 [0.4660--0.6667] \\
+\hline
 EfficientNet-B3 & attention & 224 px & 0.8048 [0.7530--0.8556] & 0.2138 & 0.7677 & 0.124 & 0.5455 [0.4476--0.6449] \\
+\hline
 DenseNet-121 & concat & 224 px & 0.8073 [0.7577--0.8504] & 0.2101 & 0.7374 & 0.122 & 0.5152 [0.4141--0.6100] \\
+\hline
 DenseNet-121 \textbf{+reg} & attention & 224 px & 0.8097 [0.7594--0.8591] & 0.2033 & 0.7980 & 0.117 & 0.5556 [0.4301--0.6458] \\
+\hline
 DenseNet-121 & attention & 512 px & 0.8150 [0.7675--0.8617] & 0.1928 & 0.8081 & 0.109 & 0.5455 [0.4476--0.6408] \\
+\hline
 DenseNet-121 \textbf{+reg} & concat & 224 px & 0.8177 [0.7659--0.8649] & 0.2357 & 0.7677 & 0.139 & 0.6061 [0.5047--0.7000] \\
+\hline
 EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273 & 0.160 & 0.5556 [0.4495--0.6505] \\
+\hline
 \textbf{EfficientNet-B3 +reg} & \textbf{attention} & \textbf{224 px} & \textbf{0.8256 [0.7755--0.8707]} & \textbf{0.3701} & \textbf{0.6263} & \textbf{0.263} & \textbf{0.6263 [0.5229--0.7143]} \\
-\bottomrule
-\multicolumn{8}{@{}p{0.96\textwidth}@{}}{\small PPV = TP/(TP+FP) at the Youden-optimal threshold. At 4.95\% prevalence, PPV is inherently low; higher PPV reflects a more conservative threshold (lower sensitivity). All CIs via 2,000-resample percentile bootstrap on the 2,000-pair test split.}
+\hline
+
 \end{tabular}
+\par\vspace{3pt}{\raggedright\footnotesize PPV = TP/(TP+FP) at the Youden-optimal threshold. At 4.95\% prevalence, PPV is inherently low; higher PPV reflects a more conservative threshold (lower sensitivity). All CIs via 2,000-resample percentile bootstrap on the 2,000-pair test split.\par}
 \end{table*}
-
-
-
-
-
-
 
 All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} are obtained by re-evaluating each best-checkpoint model on the held-out test split (n=2,000 pairs, 99 positives) at the Youden-optimal threshold, with 95\% percentile bootstrap confidence intervals ($n$=2,000 resamples). Validation AUROC curves for the best Stage~2 and Stage~3 models are shown in \autoref{fig:training-curves}.
 
@@ -465,7 +477,7 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
 \begin{tikzpicture}
 \begin{axis}[
     width=0.9\linewidth, height=6cm,
-    xlabel={Training epoch}, ylabel={Validation AUROC},
+    xlabel={Training epoch}, ylabel={Validation area under ROC curve},
     xmin=0.5, xmax=30.5, ymin=0.53, ymax=0.86,
     xtick={1,5,10,15,20,25,30},
     ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
@@ -501,7 +513,7 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
 \addplot[dashed, radblue!50, thin, forget plot] coordinates {(4,0.53)(4,0.86)};
 % Vertical dashed line: ConvNeXt backbone unfreeze (epoch 5)
 \addplot[dashed, red!40, thin, forget plot] coordinates {(5,0.53)(5,0.86)};
-\legend{Stage 2: EffB3 +reg (AUROC=0.8256 at ep.~7), Stage 3: ConvNeXt-Base (AUROC=0.8317 at ep.~8)}
+\legend{Stage 2: EfficientNet-B3 +reg (best 0.8256 at epoch 7), Stage 3: ConvNeXt-Base (best 0.8317 at epoch 8)}
 \end{axis}
 \end{tikzpicture}
 \caption{Validation AUROC vs.\ training epoch for the best Stage~2 (EffB3 +reg) and Stage~3 (ConvNeXt-Base) models. Vertical dashed lines mark the backbone unfreeze point (epoch~4 for EffB3, epoch~5 for ConvNeXt). Stars ($\star$) indicate the best-checkpoint epoch used for test-set evaluation. Both models overfit after their best epoch as training loss continues to decrease while validation AUROC plateaus.}
@@ -514,15 +526,17 @@ Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:
 \centering
 \caption{Isolated effect of the +reg training recipe.}
 \label{tab:regularisation-effect}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}llccc@{}}
-\toprule
-Backbone & Fusion & Base AUROC & +reg AUROC & Gain \\
-\midrule
+{\footnotesize\setlength{\tabcolsep}{2.5pt}%
+\begin{tabular}{|l|l|c|c|c|}
+\hline
+\textbf{Backbone} & \textbf{Fusion} & \textbf{Base AUROC} & \textbf{+reg AUROC} & \textbf{Gain} \\
+\hline
 DenseNet-121 & concat & 0.8073 & 0.8177 & +0.010 \\
+\hline
 DenseNet-121 & attention & 0.8014 & 0.8097 & +0.008 \\
+\hline
 EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
@@ -530,16 +544,19 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    ybar, bar width=12pt,
-    width=0.85\linewidth, height=5.5cm,
-    ylabel={AUROC}, ymin=0.79, ymax=0.835,
-    ytick={0.79,0.80,0.81,0.82,0.83},
+    ybar, bar width=14pt,
+    width=\linewidth, height=5.5cm,
+    ylabel={Area under ROC curve}, ymin=0.79, ymax=0.85,
+    ytick={0.79,0.80,0.81,0.82,0.83,0.84},
     xtick=data,
     symbolic x coords={DN121/concat, DN121/attn, EffB3/attn},
-    xticklabel style={font=\scriptsize},
+    xticklabels={{DenseNet-121\\concat}, {DenseNet-121\\attention}, {EfficientNet-B3\\attention}},
+    xticklabel style={align=center},
+    ,
     legend style={at={(0.03,0.97)}, anchor=north west, font=\scriptsize},
     nodes near coords, nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize, yshift=2pt},
+    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
+    every node near coord/.append style={font=\footnotesize, rotate=90, anchor=west, xshift=1pt},
     enlarge x limits=0.25,
 ]
 \addplot[fill=gray!40] coordinates {
@@ -555,8 +572,6 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \label{fig:stage2-reg-bar}
 \end{figure}
 
-
-
 \subsection{Stage 3 --- CrossView Transformer}
 
 \subsubsection{Performance without annotation}
@@ -566,28 +581,26 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \caption{CrossView Transformer results without bounding-box annotation.}
 \label{tab:crossview}
 {\small\setlength{\tabcolsep}{4pt}%
-\begin{tabular}{@{}p{0.19\textwidth} p{0.10\textwidth} p{0.20\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.06\textwidth} p{0.20\textwidth}@{}}
-\toprule
-Architecture & Training data & Best AUROC [95\% CI] & F1 & Sens & PPV & S@90\% [95\% CI] \\
-\midrule
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.19\textwidth}|p{0.10\textwidth}|p{0.20\textwidth}|p{0.06\textwidth}|p{0.06\textwidth}|p{0.06\textwidth}|p{0.20\textwidth}|}
+\hline
+\textbf{Architecture} & \textbf{Training data} & \textbf{Best AUROC [95\% CI]} & \textbf{F1} & \textbf{Sens} & \textbf{PPV} & \textbf{S@90\% [95\% CI]} \\
+\hline
 DenseNet-121 (medical init) & VinDr & 0.7648 [0.7116--0.8210] & 0.2374 & 0.5960 & 0.148 & 0.5051 [0.4020--0.6100] \\
+\hline
 EfficientNet-B3 & VinDr & 0.7795 [0.7276--0.8300] & 0.2022 & 0.7273 & 0.117 & 0.4545 [0.3474--0.5500] \\
+\hline
 DenseNet-121 & VinDr & 0.7874 [0.7299--0.8401] & 0.2678 & 0.6465 & 0.169 & 0.5556 [0.4474--0.6482] \\
+\hline
 DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.165 & 0.5354 [0.4433--0.6404] \\
+\hline
 \textbf{ConvNeXt-Base} & \textbf{VinDr} & \textbf{0.8317 [0.7832--0.8753]} & \textbf{0.2587} & \textbf{0.7475} & \textbf{0.156} & \textbf{0.5758 [0.4737--0.6768]} \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table*}
-
-
 
 \textbf{ConvNeXt-Base} achieves the best AUROC at 0.8317 (+10.0\% over single-view DenseNet-121). DenseNet-121 with \vindr{}+\rsna{} joint training reaches AUROC=0.8028, confirming incremental cross-dataset benefit. Chest-X-ray pretraining via the torchxrayvision library\footnote{torchxrayvision: \texttt{github.com/mlmed/torchxrayvision}} underperforms ImageNet initialisation (AUROC 0.7648 vs 0.7874), consistent with domain mismatch between lung radiographs and mammographic texture.
 
 \subsubsection{Bounding-box annotation ablation}
-
-
-
-
 
 \textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}; \autoref{fig:annotation-bar}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation, in which annotation boxes are randomly masked during training to prevent over-reliance on the shortcut; (b) test-time box injection via a lesion detector, so the test distribution matches training; or (c) cropping the input to the bounding-box region, passing only the annotated content to the model rather than the full image with a drawn outline. These suggestions are speculative; we are not aware of published evidence validating them specifically for mammography annotation shortcuts.
 
@@ -596,15 +609,18 @@ DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.165 & 
 \caption{Bounding-box annotation ablation. Test set always uses original unannotated PNGs.}
 \label{tab:annotation-ablation}
 {\scriptsize\setlength{\tabcolsep}{2.5pt}%
-\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{2.4cm}c@{}}
-\toprule
-Architecture & No annotation AUROC [95\% CI] & With annotation AUROC [95\% CI] & \(\Delta\)AUROC \\
-\midrule
+\begin{tabular}{|l|>{\raggedright\arraybackslash}p{2.25cm}|>{\raggedright\arraybackslash}p{2.25cm}|c|}
+\hline
+\textbf{Architecture} & \textbf{No annotation AUROC [95\% CI]} & \textbf{With annotation AUROC [95\% CI]} & \textbf{\(\Delta\)AUROC} \\
+\hline
 DenseNet-121 & 0.7874 [0.7299--0.8401] & 0.5862 [0.5274--0.6433] & -0.201 \\
+\hline
 DenseNet-121 +RSNA & 0.8028 [0.7484--0.8536] & 0.6675 & -0.135 \\
+\hline
 DenseNet-121 (medical) & 0.7648 [0.7116--0.8210] & 0.6433 [0.5886--0.6966] & -0.122 \\
+\hline
 EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
@@ -613,15 +629,18 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \begin{tikzpicture}
 \begin{axis}[
     ybar, bar width=12pt,
-    width=0.9\linewidth, height=5.5cm,
-    ylabel={AUROC}, ymin=0.55, ymax=0.86,
+    width=\linewidth, height=5.5cm,
+    ylabel={Area under ROC curve}, ymin=0.55, ymax=0.90,
     ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
     xtick=data,
     symbolic x coords={DN121, DN121-RSNA, DN121-med, EffB3},
-    xticklabel style={font=\scriptsize},
+    xticklabels={DenseNet-121, {DenseNet-121\\+RSNA}, {DenseNet-121\\(medical)}, EfficientNet-B3},
+    xticklabel style={align=center},
+    ,
     legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, font=\scriptsize},
     nodes near coords, nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize, yshift=2pt},
+    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
+    every node near coord/.append style={font=\footnotesize, rotate=90, anchor=west, xshift=1pt},
     enlarge x limits=0.15,
 ]
 \addplot[fill=radblue!50] coordinates {
@@ -688,42 +707,43 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 
 \subsection{Stage 4 --- MC Dropout uncertainty quantification}
 
-\begin{table}[htbp]
+MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}; inference flow in \autoref{fig:mc-dropout-flow}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
+
+\begin{table}[!t]
 \centering
 \caption{MC Dropout vs deterministic inference (DenseNet-121/concat).}
 \label{tab:mc-dropout}
 {\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{@{}p{1.9cm}ccccc@{}}
-\toprule
-Mode & AUROC & Sens & Spec & S@90\% & Thr. \\
-\midrule
+\begin{tabular}{|p{1.9cm}|c|c|c|c|c|}
+\hline
+\textbf{Mode} & \textbf{AUROC} & \textbf{Sens} & \textbf{Spec} & \textbf{S@90\%} & \textbf{Thr.} \\
+\hline
 Deterministic & 0.8073 & 0.7374 & 0.7249 & 0.5152 & 0.3304 \\
+\hline
 \textbf{MC Dropout} & \textbf{0.8099} & \textbf{0.7677} & \textbf{0.7007} & \textbf{0.5253} & \textbf{0.3138} \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
-MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}; inference flow in \autoref{fig:mc-dropout-flow}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
-
-
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
 \caption{Predictive entropy by class ($N=20$ MC passes, 2,000 test pairs).}
 \label{tab:mc-entropy}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Entropy & Negatives ($n=1{,}901$) & Positives ($n=99$) \\
-\midrule
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Entropy} & \textbf{Negatives ($n=1{,}901$)} & \textbf{Positives ($n=99$)} \\
+\hline
 Mean    & 0.5112 & 0.5670 \\
+\hline
 Median  & 0.5310 & 0.6221 \\
+\hline
 Std dev & 0.1436 & 0.1370 \\
-\midrule
-\multicolumn{3}{@{}p{0.9\columnwidth}@{}}{\small Gap: $+$0.056 nats. Higher entropy $\Rightarrow$ refer high-uncertainty cases.} \\
-\bottomrule
+\hline
+
+\hline
 \end{tabular}
+\par\vspace{3pt}{\raggedright\footnotesize Gap: $+$0.056 nats. Higher entropy $\Rightarrow$ refer high-uncertainty cases.\par}
 \end{table}
-
-
 
 \subsection{Stage 5 --- Model ensemble}
 
@@ -735,33 +755,32 @@ Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three br
 \centering
 \caption{Best ensemble result (mean probability, TTA$\times$5).}
 \label{tab:ensemble}
-\begin{tabular}{@{}p{0.20\textwidth} cccccccc@{}}
-\toprule
-Method & AUROC & Sens & Spec & F1 & PPV & S@90\% & S@95\% & Threshold \\
-\midrule
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Method} & \textbf{AUROC} & \textbf{Sens} & \textbf{Spec} & \textbf{F1} & \textbf{PPV} & \textbf{S@90\%} & \textbf{S@95\%} & \textbf{Threshold} \\
+\hline
 \textbf{Ensemble (N=16, TTA=5)} & \textbf{0.8458} & \textbf{0.7374} & \textbf{0.8296} & \textbf{0.2944} & \textbf{0.184} & \textbf{0.6566} & \textbf{0.5657} & \textbf{0.3414} \\
-\bottomrule
-\multicolumn{9}{@{}p{0.96\textwidth}@{}}{\small PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).}
+\hline
 \end{tabular}
+\par\vspace{3pt}{\raggedright\footnotesize PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).\par}
 \end{table*}
 
+The per-class breakdown is shown in \autoref{tab:confusion-matrix}. This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
 
-
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
 \caption{Confusion matrix at Youden threshold ($t=0.3414$).}
 \label{tab:confusion-matrix}
-\begin{tabular}{@{}lcc@{}}
-\toprule
- & Pred.\ negative & Pred.\ positive \\
-\midrule
+\begin{tabular}{|l|c|c|}
+\hline
+ & \textbf{Pred.\ negative} & \textbf{Pred.\ positive} \\
+\hline
 Actual negative & TN = 1{,}577 & FP = 324 \\
+\hline
 Actual positive & FN = 26      & TP = 73  \\
-\bottomrule
+\hline
 \end{tabular}
 \end{table}
-
-The per-class breakdown is shown in \autoref{tab:confusion-matrix}. This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
 
 \subsubsection{Updated ensemble (25 checkpoints)}
 
@@ -775,28 +794,27 @@ Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUROC=0
 
 \autoref{tab:ensemble-comparison} summarises all three configurations. Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
 \caption{Comparison of ensemble configurations (TTA$\times$5, mean-probability combination).}
 \label{tab:ensemble-comparison}
 {\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{@{}p{3.2cm}cccc@{}}
-\toprule
-Configuration & Models & AUROC & Sens & S@90\% \\
-\midrule
+\begin{tabular}{|p{3.2cm}|c|c|c|c|}
+\hline
+\textbf{Configuration} & \textbf{Models} & \textbf{AUROC} & \textbf{Sens} & \textbf{S@90\%} \\
+\hline
 Original (BreastPairNet) & 16 & \textbf{0.8458} & 0.7374 & 0.6566 \\
+\hline
 Updated (+CrossView) & 25 & 0.8441 & 0.7677 & 0.6566 \\
+\hline
 Selective (+reg+CVT+asym) & 11 & 0.8446 & --- & \textbf{0.6667} \\
-\bottomrule
-\multicolumn{5}{@{}p{0.9\columnwidth}@{}}{\small ---: not evaluated. Differences in AUROC are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers marginal S@90\% benefit.}
+\hline
+
 \end{tabular}}
+\par\vspace{3pt}{\raggedright\footnotesize ---: not evaluated. Differences in AUROC are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers marginal S@90\% benefit.\par}
 \end{table}
 
 \subsection{Stage 6 --- Hybrid triage simulation}
-
-
-
-
 
 Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}; \autoref{fig:triage-sensitivity}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:sensitivity-floors}).
 
@@ -805,18 +823,24 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
 \caption{Hybrid triage sweep (oracle vs.\ 85\% radiologist sensitivity).}
 \label{tab:triage-sweep}
 {\scriptsize\setlength{\tabcolsep}{2pt}%
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
-\midrule
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Frac} & \textbf{Wkld $\Delta$} & \textbf{Sen (or.)} & \textbf{Sen (85\%r)} & \textbf{AI Sen} & \textbf{Recall} \\
+\hline
 30\% & -30\% & 0.9495 & 0.8253 & 0.7059 & 0.0017 \\
+\hline
 40\% & -40\% & 0.9192 & 0.8071 & 0.6800 & 0.0013 \\
+\hline
 \textbf{50\%} & \textbf{-50\%} & \textbf{0.8788} & \textbf{0.7727} & \textbf{0.5862} & \textbf{0.0031} \\
+\hline
 60\% & -60\% & 0.8283 & 0.7359 & 0.5526 & 0.0052 \\
+\hline
 70\% & -70\% & 0.7677 & 0.6935 & 0.5400 & 0.0133 \\
+\hline
 80\% & -80\% & 0.7677 & 0.7207 & 0.6618 & 0.1305 \\
+\hline
 90\% & -90\% & 0.7677 & 0.7450 & 0.7262 & 0.2238 \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
@@ -825,7 +849,7 @@ Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
 \begin{tikzpicture}
 \begin{axis}[
     width=0.9\linewidth, height=4.5cm,
-    xlabel={AI-read fraction (\%)},
+    xlabel={Exams read by AI alone (\%)},
     ylabel={Overall sensitivity},
     xmin=25, xmax=95, ymin=0.65, ymax=1.00,
     xtick={30,40,50,60,70,80,90},
@@ -841,7 +865,7 @@ Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
     (30,0.8253)(40,0.8071)(50,0.7727)(60,0.7359)(70,0.6935)(80,0.7207)(90,0.7450)
 };
 \addplot[dashed, gray!70, thick, forget plot] coordinates {(25,0.85)(95,0.85)};
-\node[font=\scriptsize, gray!60] at (axis cs:86,0.863) {85\% floor};
+\node[font=\footnotesize, gray!60, anchor=north east] at (axis cs:94,0.846) {85\% floor};
 \legend{Oracle radiologist, 85\% radiologist}
 \end{axis}
 \end{tikzpicture}
@@ -854,54 +878,60 @@ Frac & Wkld $\Delta$ & Sen (or.) & Sen (85\%r) & AI Sen & Recall \\
 \caption{Max AI-read fraction by sensitivity floor.}
 \label{tab:sensitivity-floors}
 {\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{@{}p{1.7cm}ccp{2.2cm}@{}}
-\toprule
-Floor & Oracle & 85\% rad & Workload $\Delta$ \\
-\midrule
+\begin{tabular}{|p{1.7cm}|c|c|p{2.2cm}|}
+\hline
+\textbf{Floor} & \textbf{Oracle} & \textbf{85\% rad} & \textbf{Workload $\Delta$} \\
+\hline
 $\geq$90\% & 40\% & n/a & -40\% \\
+\hline
 $\geq$85\% & 50--60\% & n/a & -50\% to -60\% \\
+\hline
 $\geq$80\% & 60\% & 40\% & -40\% to -60\% \\
+\hline
 $\geq$77\% & 70\% & 50\% & -50\% to -70\% \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
-
-
 \subsection{Comparison to literature}
-
-\begin{table}[htbp]
-\centering
-\caption{AUROC progression on \vindr{} binary cancer detection.}
-\label{tab:auc-progression}
-\begin{tabular}{@{}p{0.62\columnwidth} p{0.28\columnwidth}@{}}
-\toprule
-Method & AUROC \\
-\midrule
-MamT4 \cite{18}\(\ddagger\) & 0.840 \\
-Ours Stage 1 (DenseNet-121) & 0.7564 \\
-Ours Stage 2 (BreastPairNet) & 0.8256 \\
-Ours Stage 3 (CrossView) & 0.8317 \\
-\textbf{Ours Stage 5 (Ensemble)} & \textbf{0.8458} \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
 
-\begin{figure}[tbp]
+\begin{table}[!t]
+\centering
+\caption{AUROC progression on \vindr{} binary cancer detection.}
+\label{tab:auc-progression}
+\begin{tabular}{|p{0.62\columnwidth}|p{0.28\columnwidth}|}
+\hline
+\textbf{Method} & \textbf{AUROC} \\
+\hline
+MamT4 \cite{18}\(\ddagger\) & 0.840 \\
+\hline
+Ours Stage 1 (DenseNet-121) & 0.7564 \\
+\hline
+Ours Stage 2 (BreastPairNet) & 0.8256 \\
+\hline
+Ours Stage 3 (CrossView) & 0.8317 \\
+\hline
+\textbf{Ours Stage 5 (Ensemble)} & \textbf{0.8458} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     ybar, bar width=9pt,
     width=\columnwidth, height=4.5cm,
-    ylabel={AUROC}, ymin=0.72, ymax=0.87,
+    ylabel={Area under ROC curve}, ymin=0.72, ymax=0.87,
     ytick={0.72,0.76,0.80,0.84},
     xtick=data,
     symbolic x coords={MamT4, Stage 1, Stage 2, Stage 3, Ensemble},
-    xticklabel style={font=\scriptsize, rotate=20, anchor=north east},
+    xticklabel style={rotate=20, anchor=north east},
     nodes near coords, nodes near coords align={vertical},
-    every node near coord/.append style={font=\tiny, yshift=2pt},
+    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
+    every node near coord/.append style={font=\footnotesize, yshift=2pt},
     enlarge x limits=0.15,
 ]
 \addplot[fill=radblue!50] coordinates {
@@ -921,35 +951,39 @@ AUROC progression across the pipeline is summarised in \autoref{tab:auc-progress
 
 The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:external-validation}; the per-metric performance drop is detailed in \autoref{tab:domain-gap}.
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
 \caption{External validation: \vindr{} (2{,}000 pairs, 99 cancers) vs.\ \rsna{} (4{,}764 pairs, 110 cancers).}
 \label{tab:external-validation}
 {\scriptsize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Dataset & AUROC [95\% CI] & S@90\% & Sens & Spec \\
-\midrule
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Dataset} & \textbf{AUROC [95\% CI]} & \textbf{S@90\%} & \textbf{Sens} & \textbf{Spec} \\
+\hline
 \vindr{} & 0.8458 & 0.6566 & 0.7374 & 0.8296 \\
+\hline
 \rsna{} & 0.6008 [0.5577--0.6585] & 0.1636 & 0.3909 & 0.7598 \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
-\begin{table}[htbp]
+\begin{table}[!t]
 \centering
 \caption{Performance drop: \vindr{} $\to$ \rsna{}.}
 \label{tab:domain-gap}
 {\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{@{}p{1.6cm}cccc@{}}
-\toprule
-Metric & \vindr{} & \rsna{} & Drop & Rel. \\
-\midrule
+\begin{tabular}{|p{1.6cm}|c|c|c|c|}
+\hline
+\textbf{Metric} & \textbf{\vindr{}} & \textbf{\rsna{}} & \textbf{Drop} & \textbf{Rel.} \\
+\hline
 AUROC & 0.8458 & 0.6008 & -0.245 & -29\% \\
+\hline
 S@90\%spec & 0.6566 & 0.1636 & \textbf{-0.493} & \textbf{-75\%} \\
+\hline
 Sensitivity & 0.7374 & 0.3909 & -0.347 & -47\% \\
+\hline
 Specificity & 0.8296 & 0.7598 & -0.070 & -8\% \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
 
@@ -959,21 +993,23 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 \centering
 \caption{Summary of the best-performing model family in each stage.}
 \label{tab:model-family-summary}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lcccl@{}}
-\toprule
-Family & Best AUROC & 95\% CI & S@90\% & Key advantage \\
-\midrule
+{\scriptsize\setlength{\tabcolsep}{2.5pt}%
+\begin{tabular}{|>{\raggedright\arraybackslash}p{1.9cm}|c|c|c|>{\raggedright\arraybackslash}p{1.6cm}|}
+\hline
+\textbf{Family} & \textbf{Best AUROC} & \textbf{95\% CI} & \textbf{S@90\%} & \textbf{Key advantage} \\
+\hline
 Single-view CNN & 0.7564 & --- & 0.4444 & Simple baseline \\
+\hline
 BreastPairNet (concat) & 0.8177 & 0.7659--0.8649 & 0.6061 & Robust across backbones \\
+\hline
 BreastPairNet (attention) & 0.8256 & 0.7755--0.8707 & 0.6263 & Best regularised \\
+\hline
 CrossView Transformer & 0.8317 & 0.7832--0.8753 & 0.5758 & Spatial alignment \\
+\hline
 Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best overall $\star$ \\
-\bottomrule
+\hline
 \end{tabular}}
 \end{table}
-
-
 
 \section{Discussion}
 
@@ -1010,7 +1046,6 @@ The key statistical claim of this paper is therefore not that each pipeline stag
 \section{Conclusion}
 
 We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
-
 
 \section*{Author Contributions}
 
