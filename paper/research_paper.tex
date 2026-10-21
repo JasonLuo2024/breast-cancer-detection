@@ -736,22 +736,7 @@ Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three br
 \par\vspace{3pt}{\raggedright\footnotesize PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).\par}
 \end{table*}
 
-The per-class breakdown is shown in \autoref{tab:confusion-matrix}. This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
-
-\begin{table}[!t]
-\centering
-\caption{Confusion matrix at Youden threshold ($t=0.3414$).}
-\label{tab:confusion-matrix}
-\begin{tabular}{|l|c|c|}
-\hline
- & \textbf{Pred.\ negative} & \textbf{Pred.\ positive} \\
-\hline
-Actual negative & TN = 1{,}577 & FP = 324 \\
-\hline
-Actual positive & FN = 26      & TP = 73  \\
-\hline
-\end{tabular}
-\end{table}
+This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
 
 \subsubsection{Updated ensemble (25 checkpoints)}
 
@@ -787,7 +772,7 @@ Selective (+reg+CVT+asym) & 11 & 0.8446 & --- & \textbf{0.6667} \\
 
 \subsection{Stage 6 --- Hybrid triage simulation}
 
-Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}; \autoref{fig:triage-sensitivity}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:sensitivity-floors}).
+Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}; \autoref{fig:triage-sensitivity}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:triage-sweep}).
 
 \begin{table}[!t]
 \centering
@@ -844,29 +829,9 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
 \label{fig:triage-sensitivity}
 \end{figure}
 
-\begin{table}[!t]
-\centering
-\caption{Max AI-read fraction by sensitivity floor.}
-\label{tab:sensitivity-floors}
-{\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{|p{1.7cm}|c|c|p{2.2cm}|}
-\hline
-\textbf{Floor} & \textbf{Oracle} & \textbf{85\% rad} & \textbf{Workload $\Delta$} \\
-\hline
-$\geq$90\% & 40\% & n/a & -40\% \\
-\hline
-$\geq$85\% & 50--60\% & n/a & -50\% to -60\% \\
-\hline
-$\geq$80\% & 60\% & 40\% & -40\% to -60\% \\
-\hline
-$\geq$77\% & 70\% & 50\% & -50\% to -70\% \\
-\hline
-\end{tabular}}
-\end{table}
-
 \subsection{Comparison to literature}
 
-AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression} and visualised in \autoref{fig:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
+AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
 
 \begin{table}[!t]
 \centering
@@ -889,38 +854,9 @@ Ours Stage 3 (CrossView) & 0.8317 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[!t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar, bar width=9pt,
-    width=\columnwidth, height=4.5cm,
-    ylabel={Area under ROC curve}, ymin=0.72, ymax=0.87,
-    ytick={0.72,0.76,0.80,0.84},
-    xtick=data,
-    symbolic x coords={MamT4, Stage 1, Stage 2, Stage 3, Ensemble},
-    xticklabel style={rotate=20, anchor=north east},
-    nodes near coords, nodes near coords align={vertical},
-    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
-    every node near coord/.append style={font=\footnotesize, yshift=2pt},
-    enlarge x limits=0.15,
-]
-\addplot[fill=vizblue, draw=vizblue] coordinates {
-    (MamT4,    0.840)
-    (Stage 1,  0.7564)
-    (Stage 2,  0.8256)
-    (Stage 3,  0.8317)
-    (Ensemble, 0.8458)
-};
-\end{axis}
-\end{tikzpicture}
-\caption{AUROC progression across pipeline stages vs.\ MamT4 prior work.}
-\label{fig:auc-progression}
-\end{figure}
-
 \subsection{External validation on \rsna{}}
 
-The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:external-validation}; the per-metric performance drop is detailed in \autoref{tab:domain-gap}.
+The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:external-validation}.
 
 \begin{table}[!t]
 \centering
@@ -938,49 +874,7 @@ The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. F
 \end{tabular}}
 \end{table}
 
-\begin{table}[!t]
-\centering
-\caption{Performance drop: \vindr{} $\to$ \rsna{}.}
-\label{tab:domain-gap}
-{\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{|p{1.6cm}|c|c|c|c|}
-\hline
-\textbf{Metric} & \textbf{\vindr{}} & \textbf{\rsna{}} & \textbf{Drop} & \textbf{Rel.} \\
-\hline
-AUROC & 0.8458 & 0.6008 & -0.245 & -29\% \\
-\hline
-S@90\%spec & 0.6566 & 0.1636 & \textbf{-0.493} & \textbf{-75\%} \\
-\hline
-Sensitivity & 0.7374 & 0.3909 & -0.347 & -47\% \\
-\hline
-Specificity & 0.8296 & 0.7598 & -0.070 & -8\% \\
-\hline
-\end{tabular}}
-\end{table}
-
-Three factors may drive the gap: (1) Vietnamese vs United States breast density distribution and lesion prevalence \cite{1,11}; (2) different FFDM equipment and post-processing pipelines; (3) the S@90\%spec drop ($-75.1\%$) is particularly stark at the clinical operating point, suggesting the conservative side of the decision surface is most affected by domain shift. Table~\ref{tab:model-family-summary} summarises the best-performing model family at each stage.
-
-\begin{table}[!t]
-\centering
-\caption{Summary of the best-performing model family in each stage.}
-\label{tab:model-family-summary}
-{\scriptsize\setlength{\tabcolsep}{2.5pt}%
-\begin{tabular}{|>{\raggedright\arraybackslash}p{1.9cm}|c|c|c|>{\raggedright\arraybackslash}p{1.6cm}|}
-\hline
-\textbf{Family} & \textbf{Best AUROC} & \textbf{95\% CI} & \textbf{S@90\%} & \textbf{Key advantage} \\
-\hline
-Single-view CNN & 0.7564 & --- & 0.4444 & Simple baseline \\
-\hline
-BreastPairNet (concat) & 0.8177 & 0.7659--0.8649 & 0.6061 & Robust across backbones \\
-\hline
-BreastPairNet (attention) & 0.8256 & 0.7755--0.8707 & 0.6263 & Best regularised \\
-\hline
-CrossView Transformer & 0.8317 & 0.7832--0.8753 & 0.5758 & Spatial alignment \\
-\hline
-Ensemble (16+3, TTA$\times$5) & \textbf{0.8458} & --- & \textbf{0.6566} & Best overall $\star$ \\
-\hline
-\end{tabular}}
-\end{table}
+Three factors may drive the gap: (1) Vietnamese vs United States breast density distribution and lesion prevalence \cite{1,11}; (2) different FFDM equipment and post-processing pipelines; (3) the S@90\%spec drop ($-75.1\%$) is particularly stark at the clinical operating point, suggesting the conservative side of the decision surface is most affected by domain shift.
 
 \section{Discussion}
 
