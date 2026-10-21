@@ -709,28 +709,7 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
 
 \subsection{Comparison to literature}
 
-AUROC progression across the pipeline is summarised in \autoref{tab:auc-progression}. The $\ddagger$ symbol in \autoref{tab:auc-progression} flags a methodological difference: MamT4 \cite{18} excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
-
-\begin{table}[!t]
-\centering
-\caption{AUROC progression on \vindr{} binary cancer detection.}
-\label{tab:auc-progression}
-\begin{tabular}{|p{0.62\columnwidth}|p{0.28\columnwidth}|}
-\hline
-\textbf{Method} & \textbf{AUROC} \\
-\hline
-MamT4 \cite{18}\(\ddagger\) & 0.840 \\
-\hline
-Ours Stage 1 (DenseNet-121) & 0.7564 \\
-\hline
-Ours Stage 2 (BreastPairNet) & 0.8256 \\
-\hline
-Ours Stage 3 (CrossView) & 0.8317 \\
-\hline
-\textbf{Ours Stage 5 (Ensemble)} & \textbf{0.8458} \\
-\hline
-\end{tabular}
-\end{table}
+Our best ensemble (AUROC=0.8458) exceeds MamT4 \cite{18} (AUROC=0.840), but MamT4 excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
 
 \subsection{External validation on \rsna{}}
 
