@@ -569,19 +569,19 @@ Sensitivity & 0.7374 & 0.3909 \\
 \hline
 Specificity & 0.8296 & 0.7598 \\
 \hline
-F1 & 0.2944 & --- \\
+F1 & 0.2944 & 0.0677 \\
 \hline
-PPV & 0.184 & --- \\
+PPV & 0.184 & 0.037 \\
 \hline
 S@90\% & 0.6566 & 0.1636 \\
 \hline
-S@95\% & 0.5657 & --- \\
+S@95\% & 0.5657 & 0.1182 \\
 \hline
-Threshold & 0.3414 & --- \\
+Threshold & 0.3414 & 0.4823 \\
 \hline
 \end{tabular}}
 \par\vspace{3pt}{\raggedright\footnotesize PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).\par}
-\par{\raggedright\footnotesize ---: not reported for \rsna{}.\par}
+\par{\raggedright\footnotesize \rsna{} threshold-dependent metrics use the Youden-optimal threshold on \rsna{} itself (0.4823).\par}
 \end{table}
 
 This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
