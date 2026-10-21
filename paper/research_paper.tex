@@ -9,7 +9,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{array}
-\usepackage[section]{placeins}
+\usepackage[section,below]{placeins}
 \usepackage{stfloats}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18, every axis/.append style={font=\footnotesize},
@@ -95,18 +95,27 @@ This paper makes seven contributions. First, we present a systematic comparison 
 
 \begin{figure}[!t]
 \centering
-\fbox{\begin{minipage}{0.94\linewidth}
-\small\raggedright
-\textbf{Input:} 20,000 \vindr{} DICOM images from 5,000 patients.\\[0.2em]
-\textbf{Preprocessing:} DICOM decoding, percentile clipping, CLAHE, orientation normalisation.\\[0.2em]
-\textbf{Stage 1:} single-view CNN baselines, best \(\auc=0.7564\).\\
-\textbf{Stage 2:} BreastPairNet CC+MLO fusion, best \(\auc=0.8256\).\\
-\textbf{Stage 3:} CrossView Transformer, best \(\auc=0.8317\).\\
-\textbf{Stage 3b:} annotation ablation, all painted-box variants lose 0.122--0.201 AUROC.\\
-\textbf{Stage 4:} MC Dropout, entropy-ranked uncertainty estimates.\\
-\textbf{Stage 5:} 16-model ensemble with asymmetry features and TTA, best \(\auc=0.8458\).\\
-\textbf{Stage 6:} hybrid triage simulation and external \rsna{} validation.
-\end{minipage}}
+\begin{tikzpicture}[
+  stage/.style={draw, rounded corners=2pt, fill=dgNet, align=center,
+                text width=1.62cm, minimum height=1.05cm, inner sep=1.5pt, font=\footnotesize},
+  io/.style={stage, fill=dgInput},
+  prep/.style={stage, fill=dgFeat},
+  last/.style={stage, fill=dgOut},
+  arr/.style={->, >=Latex, thick},
+  node distance=0.42cm,
+]
+\node[io]   (in)  {Input\\20,000 images};
+\node[prep, right=of in] (pre) {Preprocessing\\CLAHE, orientation};
+\node[stage, right=of pre] (s1) {\textbf{Stage 1}\\Single-view CNN};
+\node[stage, right=of s1]  (s2) {\textbf{Stage 2}\\BreastPairNet};
+\node[stage, below=0.62cm of in] (s3) {\textbf{Stage 3}\\CrossView\\+ 3b ablation};
+\node[stage, right=of s3]  (s4) {\textbf{Stage 4}\\MC Dropout};
+\node[stage, right=of s4]  (s5) {\textbf{Stage 5}\\Ensemble + TTA};
+\node[last, right=of s5]   (s6) {\textbf{Stage 6}\\Triage + RSNA test};
+\draw[arr] (in) -- (pre); \draw[arr] (pre) -- (s1); \draw[arr] (s1) -- (s2);
+\draw[arr] (s2.south) -- ++(0,-0.2) -| (s3.north);
+\draw[arr] (s3) -- (s4); \draw[arr] (s4) -- (s5); \draw[arr] (s5) -- (s6);
+\end{tikzpicture}
 \caption{\mamnet{}: overview of the six-stage breast cancer detection pipeline.}
 \label{fig:pipeline}
 \end{figure}
@@ -129,7 +138,7 @@ This paper makes seven contributions. First, we present a systematic comparison 
 
 \vindr{} \cite{1} is a Vietnamese FFDM benchmark containing 20,000 images from 5,000 patients, four views per study (R-CC, L-CC, R-MLO, L-MLO) stored as DICOM, with BI-RADS (1--5), density (A--D), and lesion-level bounding box annotations (\autoref{tab:birads-distribution}).
 
-\begin{table}[!t]
+\begin{table}[!h]
 \centering
 \caption{BI-RADS distribution in \vindr{} and binary label mapping.}
 \label{tab:birads-distribution}
