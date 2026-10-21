@@ -126,7 +126,7 @@ def _hybrid_triage(records: list[dict], ai_threshold: float) -> list[dict]:
 
         rows.append({
             "ai_reads_pct":           pct,
-            "workload_reduction_pct": 100 - pct,
+            "workload_reduction_pct": pct,   # AI reads pct% alone, so radiologist reads fall by pct%
             "n_ai_cases":             n_ai,
             "overall_sensitivity":    round(float(overall_sens),   4),
             "ai_sensitivity":         round(float(ai_sensitivity), 4),

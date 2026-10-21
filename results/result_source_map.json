@@ -477,13 +477,13 @@
       "negative": {"mean": 0.51120, "median": 0.53098, "std": 0.14360}
     },
     "triage_curve": [
-      {"ai_reads_pct": 30, "workload_reduction_pct": 70, "overall_sens": 0.9495, "ai_sens": 0.7059, "recall_rate": 0.0017},
-      {"ai_reads_pct": 40, "workload_reduction_pct": 60, "overall_sens": 0.9192, "ai_sens": 0.6800, "recall_rate": 0.0013},
+      {"ai_reads_pct": 30, "workload_reduction_pct": 30, "overall_sens": 0.9495, "ai_sens": 0.7059, "recall_rate": 0.0017},
+      {"ai_reads_pct": 40, "workload_reduction_pct": 40, "overall_sens": 0.9192, "ai_sens": 0.6800, "recall_rate": 0.0013},
       {"ai_reads_pct": 50, "workload_reduction_pct": 50, "overall_sens": 0.8788, "ai_sens": 0.5862, "recall_rate": 0.0031},
-      {"ai_reads_pct": 60, "workload_reduction_pct": 40, "overall_sens": 0.8283, "ai_sens": 0.5526, "recall_rate": 0.0052},
-      {"ai_reads_pct": 70, "workload_reduction_pct": 30, "overall_sens": 0.7677, "ai_sens": 0.5400, "recall_rate": 0.0133},
-      {"ai_reads_pct": 80, "workload_reduction_pct": 20, "overall_sens": 0.7677, "ai_sens": 0.6618, "recall_rate": 0.1305},
-      {"ai_reads_pct": 90, "workload_reduction_pct": 10, "overall_sens": 0.7677, "ai_sens": 0.7262, "recall_rate": 0.2238}
+      {"ai_reads_pct": 60, "workload_reduction_pct": 60, "overall_sens": 0.8283, "ai_sens": 0.5526, "recall_rate": 0.0052},
+      {"ai_reads_pct": 70, "workload_reduction_pct": 70, "overall_sens": 0.7677, "ai_sens": 0.5400, "recall_rate": 0.0133},
+      {"ai_reads_pct": 80, "workload_reduction_pct": 80, "overall_sens": 0.7677, "ai_sens": 0.6618, "recall_rate": 0.1305},
+      {"ai_reads_pct": 90, "workload_reduction_pct": 90, "overall_sens": 0.7677, "ai_sens": 0.7262, "recall_rate": 0.2238}
     ]
   },
 
