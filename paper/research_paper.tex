@@ -695,27 +695,7 @@ Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUROC=0
 
 \subsubsection{Ensemble comparison}
 
-\autoref{tab:ensemble-comparison} summarises all three configurations. Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
-
-\begin{table}[!t]
-\centering
-\caption{Comparison of ensemble configurations (TTA$\times$5, mean-probability combination).}
-\label{tab:ensemble-comparison}
-{\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{|p{3.2cm}|c|c|c|c|}
-\hline
-\textbf{Configuration} & \textbf{Models} & \textbf{AUROC} & \textbf{Sens} & \textbf{S@90\%} \\
-\hline
-Original (BreastPairNet) & 16 & \textbf{0.8458} & 0.7374 & 0.6566 \\
-\hline
-Updated (+CrossView) & 25 & 0.8441 & 0.7677 & 0.6566 \\
-\hline
-Selective (+reg+CVT+asym) & 11 & 0.8446 & --- & \textbf{0.6667} \\
-\hline
-
-\end{tabular}}
-\par\vspace{3pt}{\raggedright\footnotesize ---: not evaluated. Differences in AUROC are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers marginal S@90\% benefit.\par}
-\end{table}
+Across the three configurations, AUROC differences (0.8441--0.8458) are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers a marginal S@90\% benefit (0.6667 vs 0.6566). Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
 
 \subsection{Stage 6 --- Hybrid triage simulation}
 
@@ -835,7 +815,7 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 
 \textbf{Bounding-box shortcut learning.} Painted boxes provide a texture shortcut perfectly correlated with the cancer label during training but absent at test time. This pattern is consistent with well-documented shortcut learning phenomena in medical imaging. Potential remedies may include box-dropout regularisation or test-time box injection via a lesion detector.
 
-\textbf{Why adding the highest-AUROC model to the ensemble can reduce AUROC.} Adding ConvNeXt-Base (the highest individual AUROC, 0.8317) to the 16-model BreastPairNet ensemble reduces overall AUROC from 0.8458 to 0.8441 (\autoref{tab:ensemble-comparison}). This is a well-known property of ensemble methods: performance gain comes from \emph{error diversity}, not from constituent model rank. ConvNeXt-Base shares the CrossView Transformer architecture with the DenseNet-121 and EfficientNet-B3 CrossView members already present in the expanded ensemble; its error profile is therefore correlated with those members, contributing no new coverage of failure modes. Additionally, mean-probability pooling is sensitive to score miscalibration: a model whose probability outputs are systematically over- or under-confident can shift the pooled mean away from the Youden-optimal threshold for the ensemble, reducing AUC even when the individual model's rank ordering is strong. The selective ensemble in \autoref{tab:ensemble-comparison} partially mitigates this by prioritising diversity (three +reg BreastPairNet, five CrossView, three asymmetry models) over including the single best-ranked model.
+\textbf{Why adding the highest-AUROC model to the ensemble can reduce AUROC.} Adding ConvNeXt-Base (the highest individual AUROC, 0.8317) to the 16-model BreastPairNet ensemble reduces overall AUROC from 0.8458 to 0.8441. This is a well-known property of ensemble methods: performance gain comes from \emph{error diversity}, not from constituent model rank. ConvNeXt-Base shares the CrossView Transformer architecture with the DenseNet-121 and EfficientNet-B3 CrossView members already present in the expanded ensemble; its error profile is therefore correlated with those members, contributing no new coverage of failure modes. Additionally, mean-probability pooling is sensitive to score miscalibration: a model whose probability outputs are systematically over- or under-confident can shift the pooled mean away from the Youden-optimal threshold for the ensemble, reducing AUC even when the individual model's rank ordering is strong. The selective ensemble partially mitigates this by prioritising diversity (three +reg BreastPairNet, five CrossView, three asymmetry models) over including the single best-ranked model.
 
 \textbf{PPV and triage utility.} PPV at the Youden threshold ranges from 0.109 to 0.263 across Stage~2 models and 0.117 to 0.169 across Stage~3 models, consistent with the 4.95\% positive prevalence in \vindr{}. The ensemble achieves PPV=0.184 (73 true positives, 324 false positives at threshold 0.3414). In a triage context, PPV governs recall burden: at PPV=0.184, approximately 1 in 5.4 AI-flagged cases is cancer-positive, comparable to published AI-assisted triage operating points (PPV 15--25\% at high-sensitivity settings). Screening prevalence is typically lower than \vindr{}'s 4.95\%, so deployed PPV would be correspondingly lower; calibrated probability outputs and threshold adjustment for local prevalence would be required before clinical application.
 
