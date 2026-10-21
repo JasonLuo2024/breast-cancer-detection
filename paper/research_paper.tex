@@ -346,7 +346,7 @@ All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with FP16 mixed-precision (A
 
 \subsection{Stage 1 --- Single-view CNN baselines}
 
-DenseNet-121 achieves the best AUROC (0.7564) but only 24.8\% sensitivity at the default threshold (\autoref{tab:single-view}; \autoref{fig:stage1-bar}). All five models overfit (train F1~$\approx$~0.98) and reach only 40--45\% sensitivity at the 90\%-specificity operating point --- well below the $\sim$85\% radiologist sensitivity in screening literature \cite{17}.
+DenseNet-121 achieves the best AUROC (0.7564) but only 24.8\% sensitivity at the default threshold (\autoref{tab:single-view}). All five models overfit (train F1~$\approx$~0.98) and reach only 40--45\% sensitivity at the 90\%-specificity operating point --- well below the $\sim$85\% radiologist sensitivity in screening literature \cite{17}.
 
 \begin{table}[!t]
 \centering
@@ -369,36 +369,6 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 \hline
 \end{tabular}}
 \end{table}
-
-\begin{figure}[!t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar, bar width=10pt,
-    width=0.88\linewidth, height=4.5cm,
-    ylabel={Area under ROC curve}, ymin=0.68, ymax=0.785,
-    ytick={0.68,0.70,0.72,0.74,0.76,0.78},
-    xtick=data,
-    symbolic x coords={VGG19, ResNet-50, EffNet-B3, ResNet-50*, DenseNet-121},
-    xticklabels={VGG19, ResNet-50, EfficientNet-B3, ResNet-50*, DenseNet-121},
-    xticklabel style={rotate=20, anchor=north east},
-    nodes near coords, nodes near coords align={vertical},
-    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
-    every node near coord/.append style={font=\footnotesize, yshift=2pt},
-    enlarge x limits=0.12,
-]
-\addplot[fill=vizblue, draw=vizblue] coordinates {
-    (VGG19,        0.7066)
-    (ResNet-50,    0.7286)
-    (EffNet-B3,    0.7330)
-    (ResNet-50*,   0.7489)
-    (DenseNet-121, 0.7564)
-};
-\end{axis}
-\end{tikzpicture}
-\caption{Stage~1: AUROC by single-view architecture. ResNet-50* uses 384\,px; all others 224\,px.}
-\label{fig:stage1-bar}
-\end{figure}
 
 \subsection{Stage 2 --- Multi-view BreastPairNet}
 
@@ -491,7 +461,7 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
 \label{fig:training-curves}
 \end{figure}
 
-Three observations stand out (\autoref{tab:regularisation-effect}; \autoref{fig:stage2-reg-bar}). \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
+Three observations stand out (\autoref{tab:regularisation-effect}). \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
 
 \begin{table}[!t]
 \centering
@@ -510,38 +480,6 @@ EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
 \hline
 \end{tabular}}
 \end{table}
-
-\begin{figure}[!t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar, bar width=14pt,
-    width=\linewidth, height=5.5cm,
-    ylabel={Area under ROC curve}, ymin=0.79, ymax=0.85,
-    ytick={0.79,0.80,0.81,0.82,0.83,0.84},
-    xtick=data,
-    symbolic x coords={DN121/concat, DN121/attn, EffB3/attn},
-    xticklabels={{DenseNet-121\\concat}, {DenseNet-121\\attention}, {EfficientNet-B3\\attention}},
-    xticklabel style={align=center},
-    ,
-    legend style={at={(0.03,0.97)}, anchor=north west, font=\scriptsize},
-    nodes near coords, nodes near coords align={vertical},
-    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
-    every node near coord/.append style={font=\footnotesize, rotate=90, anchor=west, xshift=1pt},
-    enlarge x limits=0.25,
-]
-\addplot[fill=vizbase, draw=vizbase!60!black] coordinates {
-    (DN121/concat, 0.8073)(DN121/attn, 0.8014)(EffB3/attn, 0.8048)
-};
-\addplot[fill=vizblue, draw=vizblue] coordinates {
-    (DN121/concat, 0.8177)(DN121/attn, 0.8097)(EffB3/attn, 0.8256)
-};
-\legend{Base, {+reg}}
-\end{axis}
-\end{tikzpicture}
-\caption{Stage~2: Effect of +reg on AUROC for three backbone/fusion pairs.}
-\label{fig:stage2-reg-bar}
-\end{figure}
 
 \subsection{Stage 3 --- CrossView Transformer}
 
