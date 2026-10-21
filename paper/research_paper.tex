@@ -153,7 +153,7 @@ We address these gaps with \mamnet{}, a six-stage pipeline (\autoref{fig:pipelin
 \end{tabular}
 \end{table}
 
-The official split is 4,000 training patients (16,000 images) and 1,000 test patients (4,000 images). For multi-view experiments we construct one ipsilateral CC+MLO pair per breast, yielding 8,000 training pairs and 2,000 test pairs, of which 99 test pairs (4.95\%) are cancer-positive. A 5\% validation slice (\textasciitilde{}400 pairs) is held out for early stopping; the official test split is never used for model selection.
+The official split is 4,000 training patients (16,000 images) and 1,000 test patients (4,000 images). For multi-view experiments we construct one ipsilateral CC+MLO pair per breast, yielding 8,000 training pairs and 2,000 test pairs, of which 99 test pairs (4.95\%) are cancer-positive. A 5\% validation slice (\textasciitilde{}400 pairs) is held out for early stopping; the official test split is never used for training or checkpoint selection.
 
 \subsection{\rsna{} (external dataset)}
 
@@ -333,7 +333,7 @@ Ground-truth boxes (\vindr{}) were drawn as white outlines (40-px line width) on
 
 MC Dropout was chosen for uncertainty quantification because it requires no architectural modifications: dropout layers that are normally disabled at test time are kept active, converting a single point prediction into a distribution over outputs without retraining \cite{13}. This makes entropy-based case ranking possible at negligible computational cost.
 
-Concretely, BatchNorm is kept in eval mode while dropout remains active. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is selected by maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the validation set.
+Concretely, BatchNorm is kept in eval mode while dropout remains active. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is the Youden-optimal cut-off, maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the evaluation set; the same rule is used for every threshold reported in this paper.
 
 \subsection{Hybrid Triage (Stage 6)}
 
@@ -681,7 +681,7 @@ The key statistical claim of this paper is therefore not that each pipeline stag
 
 \textbf{Contribution relative to MamT4.} A reviewer might ask whether \mamnet{} offers meaningful progress given that MamT4 \cite{18} reports AUROC=0.840 on \vindr{}. Beyond the evaluation difference noted in the comparison to literature, \mamnet{} contributes a controlled ablation study that isolates the effect of multi-view fusion, regularisation, spatial cross-attention, and ensemble size---components that MamT4 does not systematically ablate. \mamnet{} also adds uncertainty quantification (Stage~4) and a hybrid triage simulation (Stage~6) grounded in a published clinical framework \cite{12}, enabling a workload-reduction analysis that MamT4 does not provide. These dimensions complement rather than compete with MamT4's classification performance.
 
-\textbf{Limitations.} (i) Small positive test count (99 pairs) limits fine-grained comparison; (ii) large domain gap to United States FFDM (AUROC=0.6008 on \rsna{}); (iii) MamT4 comparison uses a slightly different BI-RADS exclusion; (iv) 7,054 non-CC/MLO RSNA images excluded from pair construction.
+\textbf{Limitations.} (i) Small positive test count (99 pairs) limits fine-grained comparison; (ii) large domain gap to United States FFDM (AUROC=0.6008 on \rsna{}); (iii) MamT4 comparison uses a slightly different BI-RADS exclusion; (iv) 7,054 non-CC/MLO RSNA images excluded from pair construction; (v) operating-point metrics (sensitivity, specificity, F1, PPV) use Youden-optimal thresholds chosen on the evaluation data and are therefore optimistic, whereas AUROC, S@90\% and S@95\% are threshold-independent.
 
 \textbf{Future work.} (1) Box-dropout or test-time box injection; (2) CrossView at 512\,px with gradient checkpointing; (3) Validate on CBIS-DDSM and INbreast; (4) Tighter ensemble of +reg BreastPairNet + best CrossView + asymmetry; (5) Fine-tune on RSNA training pairs; (6) Prospective triage study with real reader sensitivity data.
 
