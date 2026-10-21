@@ -574,58 +574,9 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \label{fig:annotation-bar}
 \end{figure}
 
-\begin{figure*}[!t]
-\centering
-\begin{tikzpicture}[
-  mainb/.style={draw, fill=dgInput, rounded corners=3pt,
-                minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
-  passb/.style={draw, fill=dgFeat, rounded corners=2pt,
-                minimum width=3.2cm, minimum height=0.65cm, font=\small, align=center},
-  calcb/.style={draw, fill=dgFuse, rounded corners=2pt,
-                minimum width=3.6cm, minimum height=0.7cm, font=\small, align=center},
-  decb/.style={draw, rounded corners=2pt,
-               minimum width=3.0cm, minimum height=0.7cm, font=\small, align=center},
-  arr/.style={->, >=Latex, thick},
-  node distance=0.75cm,
-]
-% Top: input
-\node[mainb] (inp) {Test pair: (CC image, MLO image)};
-
-% Multiple passes -- shown as a box
-\node[mainb, fill=dgNet, minimum height=1.0cm, below=of inp] (passes)
-  {$N=20$ stochastic forward passes\\{\scriptsize(Dropout ON, BatchNorm in eval mode)}};
-
-% Probability samples
-\node[mainb, fill=dgFeat, below=of passes] (probs)
-  {$p_1,\; p_2,\; \ldots,\; p_{20} \;\in\; [0,1]$};
-
-% Two outputs side-by-side
-\node[calcb, below left=0.8cm and 1.6cm of probs] (meanbox)
-  {Mean:\\$\bar{p}=\tfrac{1}{N}\!\sum_{i=1}^{N} p_i$};
-\node[calcb, fill=dgFuse, below right=0.8cm and 1.6cm of probs] (entbox)
-  {Entropy:\\$H(\bar{p})=-\bar{p}\log\bar{p}-(1\!-\!\bar{p})\log(1\!-\!\bar{p})$};
-
-% Decision boxes
-\node[decb, fill=dgOut, below=of meanbox] (classify)
-  {Classify: $\bar{p} > \tau$\\(Youden threshold)};
-\node[decb, fill=dgOut, below=of entbox] (refer)
-  {Triage: high $H(\bar{p})$\\$\Rightarrow$ refer to radiologist};
-
-% Arrows
-\draw[arr] (inp)    -- (passes);
-\draw[arr] (passes) -- (probs);
-\draw[arr] (probs.south) -- +(0,-0.4) -| (meanbox.north);
-\draw[arr] (probs.south) -- +(0,-0.4) -| (entbox.north);
-\draw[arr] (meanbox) -- (classify);
-\draw[arr] (entbox)  -- (refer);
-\end{tikzpicture}
-\caption{MC Dropout inference (Stage~4). Dropout layers remain active at test time while BatchNorm uses running statistics. Twenty stochastic passes produce a probability distribution $\{p_i\}_{i=1}^{20}$. The mean $\bar{p}$ is used for classification at the Youden-optimal threshold $\tau$; the binary entropy $H(\bar{p})$ ranks cases by epistemic uncertainty and routes high-uncertainty cases to a radiologist in the Stage~6 triage protocol.}
-\label{fig:mc-dropout-flow}
-\end{figure*}
-
 \subsection{Stage 4 --- MC Dropout uncertainty quantification}
 
-MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}; inference flow in \autoref{fig:mc-dropout-flow}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
+MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
 
 \begin{table}[!t]
 \centering
