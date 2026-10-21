@@ -91,33 +91,7 @@ The \vindr{} benchmark \cite{1} is a 20,000-image, patient-level, 4-view FFDM da
 
 This paper makes seven contributions. First, we present a systematic comparison of five single-view CNN backbones. Second, we introduce \textbf{BreastPairNet}, a shared-backbone multi-view network evaluated across twelve backbone$\times$fusion$\times$resolution variants. Third, we propose a \textbf{CrossView Transformer} with bidirectional spatial cross-attention between views. Fourth, a controlled \textbf{bounding-box annotation ablation} documents a consistent negative result across all four architecture pairs. Fifth, a \textbf{16-model ensemble} with TTA achieves AUROC=0.8458, the best result in this study. Sixth, \textbf{MC Dropout} provides calibrated uncertainty estimates with a statistically meaningful entropy gap between positive and negative cases. Seventh, a \textbf{hybrid triage simulation} based on the Verboom framework demonstrates 50\% workload reduction while preserving 87.9\% sensitivity under oracle conditions.
 
-\autoref{fig:pipeline} illustrates the full pipeline, and \autoref{tab:key-results} summarises the main AUROC results. Sensitivity at 90\% specificity (\satninety{}) on \vindr{}: \textbf{0.6566} (best ensemble) vs 0.1636 (\rsna{}). The results suggest that the conservative end of the decision surface is most affected by domain shift, which may be due to a large domain gap between the Vietnamese \vindr{} training data and the \rsna{} screening population.
-
-\begin{table}[!t]
-\centering
-\caption{Summary of the main AUROC results across the six-stage pipeline.}
-\label{tab:key-results}
-{\footnotesize\setlength{\tabcolsep}{2.5pt}%
-\begin{tabular}{|l|>{\raggedright\arraybackslash}p{3.3cm}|c|>{\raggedright\arraybackslash}p{1.55cm}|}
-\hline
-\textbf{Stage} & \textbf{Method} & \textbf{AUROC} & \textbf{vs.\ single-view} \\
-\hline
-Prior work & MamT4 \cite{18} (4-view Transformer)\(\ddagger\) & 0.840 & --- \\
-\hline
-Stage 1 & DenseNet-121 (best single-view) & 0.756 & baseline \\
-\hline
-Stage 2 & EfficientNet-B3 +reg (BreastPairNet) & 0.826 & \textbf{+9.1\%} \\
-\hline
-Stage 3 & ConvNeXt-Base (CrossView Transformer) & 0.832 & \textbf{+10.0\%} \\
-\hline
-Stage 4 & DenseNet-121/concat MC Dropout & 0.810 & sensitivity \(\uparrow\) \\
-\hline
-\textbf{Stage 5} & \textbf{16-model ensemble + TTA\(\times\)5} & \textbf{0.846} & \textbf{+11.8\% \(\star\)} \\
-\hline
-External & \rsna{} (zero-shot transfer) & 0.601 & domain gap \textbf{!} \\
-\hline
-\end{tabular}}
-\end{table}
+\autoref{fig:pipeline} illustrates the full pipeline. Sensitivity at 90\% specificity (\satninety{}) on \vindr{}: \textbf{0.6566} (best ensemble) vs 0.1636 (\rsna{}). The results suggest that the conservative end of the decision surface is most affected by domain shift, which may be due to a large domain gap between the Vietnamese \vindr{} training data and the \rsna{} screening population.
 
 \begin{figure}[!t]
 \centering
