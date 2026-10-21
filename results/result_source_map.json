@@ -1,5 +1,25 @@
 {
   "description": "Maps every result in the paper to its authoritative source file (training log + saved JSON).",
+  "voi_lut_extension": {
+    "description": "DICOM Modality/VOI-LUT extension. Aggregate result artifacts only; row-level prediction files are not published.",
+    "endpoint": "VinDr-Mammo breast-level BI-RADS 4/5 versus 1/2/3",
+    "crossfit_protocol": "For each held-out patient fold, select an epoch on the other four folds using a three-epoch mean-AUC window.",
+    "oof_result": {
+      "model": "ConvNeXt CrossView, focal alpha 0.75",
+      "auc": 0.8212,
+      "auc_ci_95": [0.7933, 0.8487],
+      "result_json": "results/voi_lut_extension/crossview_oof_analysis.json"
+    },
+    "frozen_official_test_snapshot": {
+      "components": 6,
+      "fold_checkpoints_per_component": 5,
+      "aggregation": "equal mean across components after fold means",
+      "auc": 0.85,
+      "auc_ci_95": [0.8016, 0.8949],
+      "result_json": "results/voi_lut_extension/final_test_20261015.json",
+      "interpretation": "Valid fixed-recipe measurement. It was not used for model, checkpoint, preprocessing, or weight selection; the nominal 0.0042 difference from 0.8458 is not an established superiority claim without a paired predeclared comparison."
+    }
+  },
   "generated": "2026-05-22",
   "log_dir": "C:/Users/JasonLuo2026/Desktop/breast-cancer-research/data/",
   "results_dir": "G:/breast-cancer-research/results/",

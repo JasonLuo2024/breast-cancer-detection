@@ -1,0 +1,420 @@
+{
+  "endpoint": "BI-RADS 4/5 versus 1/2/3",
+  "unit": "breast",
+  "selection_partition": "VinDr official training only",
+  "official_test_used": false,
+  "crossfit_protocol": "held-out fold epoch/calibrator/threshold/stacker selected or fitted on other four folds",
+  "components": {
+    "crossview_focal075": {
+      "selected_epoch_by_fold": {
+        "0": 4,
+        "1": 4,
+        "2": 5,
+        "3": 4,
+        "4": 4
+      },
+      "final_training_epoch": 4,
+      "auc": 0.821166288001731,
+      "patient_bootstrap": {
+        "estimate": 0.821166288001731,
+        "ci95": [
+          0.7932576265980892,
+          0.8487187409575441
+        ],
+        "valid_bootstraps": 2000
+      }
+    },
+    "crossview_sampler05": {
+      "selected_epoch_by_fold": {
+        "0": 5,
+        "1": 5,
+        "2": 5,
+        "3": 5,
+        "4": 5
+      },
+      "final_training_epoch": 5,
+      "auc": 0.7516600504331761,
+      "patient_bootstrap": {
+        "estimate": 0.7516600504331761,
+        "ci95": [
+          0.7230617659486029,
+          0.7823560594986093
+        ],
+        "valid_bootstraps": 2000
+      }
+    }
+  },
+  "scores": {
+    "crossview_focal075": {
+      "auc": 0.821166288001731,
+      "patient_bootstrap": {
+        "estimate": 0.821166288001731,
+        "ci95": [
+          0.7932576265980892,
+          0.8487187409575441
+        ],
+        "valid_bootstraps": 2000
+      },
+      "calibration": {
+        "brier": 0.05945591743143002,
+        "calibration_intercept": -1.9517332966568373,
+        "calibration_slope": 0.8842775004800196,
+        "ece_10bin": 0.11393119021877647
+      }
+    },
+    "crossview_sampler05": {
+      "auc": 0.7516600504331761,
+      "patient_bootstrap": {
+        "estimate": 0.7516600504331761,
+        "ci95": [
+          0.7230617659486029,
+          0.7823560594986093
+        ],
+        "valid_bootstraps": 2000
+      },
+      "calibration": {
+        "brier": 0.03876577769703958,
+        "calibration_intercept": -0.8691466187876985,
+        "calibration_slope": 1.0551673621531312,
+        "ece_10bin": 0.05129867589101196
+      }
+    },
+    "convex_stack": {
+      "auc": 0.8251237110828152,
+      "patient_bootstrap": {
+        "estimate": 0.8251237110828152,
+        "ci95": [
+          0.7978461809180495,
+          0.8533829214264953
+        ],
+        "valid_bootstraps": 2000
+      },
+      "calibration": {
+        "brier": 0.049947246655327356,
+        "calibration_intercept": -1.5489050898894021,
+        "calibration_slope": 1.0766064213327318,
+        "ece_10bin": 0.10106023712272298
+      }
+    },
+    "logistic_stack": {
+      "auc": 0.8205744055792742,
+      "patient_bootstrap": {
+        "estimate": 0.8205744055792742,
+        "ci95": [
+          0.7921742636087936,
+          0.849292173732395
+        ],
+        "valid_bootstraps": 2000
+      },
+      "calibration": {
+        "brier": 0.03245535580851037,
+        "calibration_intercept": 0.04839816649437988,
+        "calibration_slope": 1.0223315240244244,
+        "ece_10bin": 0.00809868879978208
+      }
+    },
+    "convex_stack_platt": {
+      "auc": 0.8204246040662789,
+      "patient_bootstrap": {
+        "estimate": 0.8204246040662789,
+        "ci95": [
+          0.7927454909525724,
+          0.8488626147343337
+        ],
+        "valid_bootstraps": 2000
+      },
+      "calibration": {
+        "brier": 0.034000709473641005,
+        "calibration_intercept": 0.06058085255716794,
+        "calibration_slope": 1.0317087439154509,
+        "ece_10bin": 0.006572069678803147
+      }
+    },
+    "convex_stack_isotonic": {
+      "auc": 0.8154110803185779,
+      "patient_bootstrap": {
+        "estimate": 0.8154110803185779,
+        "ci95": [
+          0.7869377904387086,
+          0.8439118951829134
+        ],
+        "valid_bootstraps": 2000
+      },
+      "calibration": {
+        "brier": 0.032818244818591365,
+        "calibration_intercept": -0.6947803358983076,
+        "calibration_slope": 0.7197762622223756,
+        "ece_10bin": 0.006585550139998358
+      }
+    }
+  },
+  "paired_score_differences": {
+    "convex_stack_minus_focal075": {
+      "estimate": 0.003957423081084266,
+      "ci95": [
+        -0.002918526383994813,
+        0.013075516291293299
+      ],
+      "valid_bootstraps": 2000
+    },
+    "logistic_stack_minus_focal075": {
+      "estimate": -0.0005918824224567798,
+      "ci95": [
+        -0.010350888833104116,
+        0.011070485679466158
+      ],
+      "valid_bootstraps": 2000
+    },
+    "focal075_minus_sampler05": {
+      "estimate": 0.0695062375685549,
+      "ci95": [
+        0.042625668947658624,
+        0.09548418996168286
+      ],
+      "valid_bootstraps": 2000
+    }
+  },
+  "stacker": {
+    "convex_weight_on_focal_by_heldout_fold": {
+      "0": 0.8,
+      "1": 0.78,
+      "2": 0.73,
+      "3": 0.63,
+      "4": 0.84
+    }
+  },
+  "selected_development_score": "convex_stack",
+  "routing": {
+    "0.9": {
+      "threshold_by_fold": {
+        "0": 0.07483363337814807,
+        "1": 0.08577677294611925,
+        "2": 0.09585082113742825,
+        "3": 0.0775947174429893,
+        "4": 0.07483363337814807
+      },
+      "achieved_sensitivity": 0.9063291139240506,
+      "specificity": 0.30953320184089417,
+      "referred_fraction": 0.701125,
+      "workload_reduction": 0.298875,
+      "false_negatives": 37,
+      "positives": 395
+    },
+    "0.95": {
+      "threshold_by_fold": {
+        "0": 0.066812542527914,
+        "1": 0.066812542527914,
+        "2": 0.08219010218977926,
+        "3": 0.066812542527914,
+        "4": 0.066812542527914
+      },
+      "achieved_sensitivity": 0.9443037974683545,
+      "specificity": 0.15069033530571993,
+      "referred_fraction": 0.854,
+      "workload_reduction": 0.146,
+      "false_negatives": 22,
+      "positives": 395
+    },
+    "0.975": {
+      "threshold_by_fold": {
+        "0": 0.05835849121212957,
+        "1": 0.05835849121212957,
+        "2": 0.07406135104596608,
+        "3": 0.05835849121212957,
+        "4": 0.05835849121212957
+      },
+      "achieved_sensitivity": 0.9493670886075949,
+      "specificity": 0.12465483234714005,
+      "referred_fraction": 0.879,
+      "workload_reduction": 0.121,
+      "false_negatives": 20,
+      "positives": 395
+    },
+    "0.99": {
+      "threshold_by_fold": {
+        "0": 0.051272806338965846,
+        "1": 0.051272806338965846,
+        "2": 0.06852068260312077,
+        "3": 0.051272806338965846,
+        "4": 0.051272806338965846
+      },
+      "achieved_sensitivity": 0.9569620253164557,
+      "specificity": 0.10756081525312294,
+      "referred_fraction": 0.895625,
+      "workload_reduction": 0.104375,
+      "false_negatives": 17,
+      "positives": 395
+    }
+  },
+  "subgroups": {
+    "age_group": [
+      {
+        "group": "<40",
+        "n": 1872,
+        "positive": 80,
+        "auc": 0.7765834263392857,
+        "mean_score": 0.14323670423697105
+      },
+      {
+        "group": "40-49",
+        "n": 2942,
+        "positive": 115,
+        "auc": 0.7687823933806001,
+        "mean_score": 0.14566156247620582
+      },
+      {
+        "group": "50-59",
+        "n": 1620,
+        "positive": 79,
+        "auc": 0.8616630660675708,
+        "mean_score": 0.15017985360308284
+      },
+      {
+        "group": "60-69",
+        "n": 428,
+        "positive": 33,
+        "auc": 0.8741848868431147,
+        "mean_score": 0.16091422825146498
+      },
+      {
+        "group": "70+",
+        "n": 74,
+        "positive": 21,
+        "auc": 0.8760107816711591,
+        "mean_score": 0.2727613723353558
+      }
+    ],
+    "density": [
+      {
+        "group": "DENSITY A",
+        "n": 40,
+        "positive": 3,
+        "auc": 0.9099099099099099,
+        "mean_score": 0.14922700104769318
+      },
+      {
+        "group": "DENSITY B",
+        "n": 764,
+        "positive": 54,
+        "auc": 0.9146583202921231,
+        "mean_score": 0.1540430275472222
+      },
+      {
+        "group": "DENSITY C",
+        "n": 6116,
+        "positive": 311,
+        "auc": 0.8118154047264943,
+        "mean_score": 0.15284337386901883
+      },
+      {
+        "group": "DENSITY D",
+        "n": 1080,
+        "positive": 27,
+        "auc": 0.7874503183145157,
+        "mean_score": 0.1342906197322946
+      }
+    ],
+    "laterality": [
+      {
+        "group": "L",
+        "n": 4000,
+        "positive": 204,
+        "auc": 0.8187023492220914,
+        "mean_score": 0.15244320329693142
+      },
+      {
+        "group": "R",
+        "n": 4000,
+        "positive": 191,
+        "auc": 0.8308195387336964,
+        "mean_score": 0.1484272709485143
+      }
+    ],
+    "birads": [
+      {
+        "group": "BI-RADS 1",
+        "n": 5362,
+        "positive": 0,
+        "auc": null,
+        "mean_score": 0.11663028011708497
+      },
+      {
+        "group": "BI-RADS 2",
+        "n": 1871,
+        "positive": 0,
+        "auc": null,
+        "mean_score": 0.1587114087026715
+      },
+      {
+        "group": "BI-RADS 3",
+        "n": 372,
+        "positive": 0,
+        "auc": null,
+        "mean_score": 0.21753548108051302
+      },
+      {
+        "group": "BI-RADS 4",
+        "n": 305,
+        "positive": 305,
+        "auc": null,
+        "mean_score": 0.4157892678559559
+      },
+      {
+        "group": "BI-RADS 5",
+        "n": 90,
+        "positive": 90,
+        "auc": null,
+        "mean_score": 0.8158040405917499
+      }
+    ]
+  },
+  "subgroup_auc_interactions": {
+    "laterality": {
+      "contrast": "L minus R",
+      "estimate": -0.012117189511605009,
+      "ci95": [
+        -0.06706690573517272,
+        0.04008563296908971
+      ],
+      "valid_bootstraps": 2000
+    },
+    "density": {
+      "contrast": "DENSITY C minus DENSITY D",
+      "estimate": 0.024365086411978543,
+      "ci95": [
+        -0.08602899592257926,
+        0.13324786709118383
+      ],
+      "valid_bootstraps": 2000
+    },
+    "age": {
+      "contrast": ">=50 minus <50",
+      "estimate": 0.06585180623227438,
+      "ci95": [
+        0.014729209793238801,
+        0.11739528596861323
+      ],
+      "valid_bootstraps": 2000
+    }
+  },
+  "historical_preprocessing_comparison": {
+    "scope": "matched CrossView ResNet-50, 224px, 5 folds x 3 seeds; distinct from the 1152x896 ConvNeXt analysis",
+    "voi_lut_auc": 0.8011298363002355,
+    "baseline_auc": 0.7804628866751553,
+    "paired_patient_bootstrap": {
+      "n_boot": 5000,
+      "delta": 0.0206669496250802,
+      "ci95": [
+        -0.0005019653236389529,
+        0.0428929632029003
+      ],
+      "probability_delta_positive": 0.9716
+    },
+    "nonnegative_mean_fold_deltas": 3
+  },
+  "limitations": [
+    "The selected development score is selected on pooled OOF evidence and requires external locked confirmation.",
+    "BI-RADS-category AUC is undefined because BI-RADS 4/5 defines the positive endpoint; category score summaries are descriptive.",
+    "The historical preprocessing comparison uses ResNet-50 at 224px, not the new ConvNeXt 1152x896 configuration."
+  ]
+}

@@ -19,6 +19,13 @@
 | **Stage 5** | **16-model ensemble + TTA×5** | **0.846** | **+11.8% ★** |
 | External | RSNA 2022 (zero-shot transfer) | 0.601 | domain gap |
 
+The later DICOM Modality/VOI-LUT extension uses patient-stratified five-fold
+cross-fitted selection. Its focal CrossView OOF AUROC was 0.8212
+(95% CI 0.7933--0.8487), and a frozen equal-weight six-component official-test
+snapshot measured 0.8500 (95% CI 0.8016--0.8949). See
+[`results/voi_lut_extension/`](results/voi_lut_extension/) for the aggregate
+result files, protocol notes, and interpretation caveat.
+
 Key finding: bounding-box annotations consistently **hurt** AUC by 0.12–0.20 due to shortcut learning (train/test distribution shift).
 
 ---
@@ -69,7 +76,8 @@ breast-cancer-detection/
 │   │   ├── stage3/                  # CrossView Transformer result JSONs
 │   │   ├── stage4/                  # MC Dropout / uncertainty result JSON
 │   │   └── stage5/                  # Ensemble result JSONs
-│   └── external_validation/         # RSNA 2022 zero-shot result JSON
+│   ├── external_validation/         # RSNA 2022 zero-shot result JSON
+│   └── voi_lut_extension/           # VOI-LUT OOF and frozen-test aggregate results
 └── paper/
     ├── research_paper.md            # Full paper (Markdown, corrected metrics)
     ├── research_paper.tex
