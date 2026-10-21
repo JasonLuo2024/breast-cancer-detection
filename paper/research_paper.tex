@@ -470,25 +470,7 @@ All point estimates in \autoref{tab:breastpairnet} and \autoref{tab:crossview} a
 \label{fig:training-curves}
 \end{figure}
 
-Three observations stand out (\autoref{tab:regularisation-effect}). \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
-
-\begin{table}[!t]
-\centering
-\caption{Isolated effect of the +reg training recipe.}
-\label{tab:regularisation-effect}
-{\footnotesize\setlength{\tabcolsep}{2.5pt}%
-\begin{tabular}{|l|l|c|c|c|}
-\hline
-\textbf{Backbone} & \textbf{Fusion} & \textbf{Base AUROC} & \textbf{+reg AUROC} & \textbf{Gain} \\
-\hline
-DenseNet-121 & concat & 0.8073 & 0.8177 & +0.010 \\
-\hline
-DenseNet-121 & attention & 0.8014 & 0.8097 & +0.008 \\
-\hline
-EfficientNet-B3 & attention & 0.8048 & \textbf{0.8256} & \textbf{+0.021} \\
-\hline
-\end{tabular}}
-\end{table}
+Three observations stand out (\autoref{tab:breastpairnet}). \textbf{(i) +reg consistently lifts AUROC} by from 0.008 to 0.021 across all backbone/fusion pairs. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px) due to batch-size reduction under VRAM pressure.
 
 \subsection{Stage 3 --- CrossView Transformer}
 
@@ -520,7 +502,7 @@ DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.165 & 
 
 \subsubsection{Bounding-box annotation ablation}
 
-\textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}; \autoref{fig:annotation-bar}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation, in which annotation boxes are randomly masked during training to prevent over-reliance on the shortcut; (b) test-time box injection via a lesion detector, so the test distribution matches training; or (c) cropping the input to the bounding-box region, passing only the annotated content to the model rather than the full image with a drawn outline. These suggestions are speculative; we are not aware of published evidence validating them specifically for mammography annotation shortcuts.
+\textbf{All four pairs show annotation consistently degrades AUROC by 0.122--0.201} (\autoref{tab:annotation-ablation}). At epoch 4 the backbone unfreezes and fits the white box outlines as a shortcut texture; training F1 reaches $\sim$0.97 while test AUROC collapses because boxes are absent at test time. Potential remedies may include: (a) box-dropout regularisation, in which annotation boxes are randomly masked during training to prevent over-reliance on the shortcut; (b) test-time box injection via a lesion detector, so the test distribution matches training; or (c) cropping the input to the bounding-box region, passing only the annotated content to the model rather than the full image with a drawn outline. These suggestions are speculative; we are not aware of published evidence validating them specifically for mammography annotation shortcuts.
 
 \begin{table}[!t]
 \centering
@@ -542,46 +524,14 @@ EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
 \end{tabular}}
 \end{table}
 
-\begin{figure}[!t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar, bar width=12pt,
-    width=\linewidth, height=5.5cm,
-    ylabel={Area under ROC curve}, ymin=0.55, ymax=0.90,
-    ytick={0.55,0.60,0.65,0.70,0.75,0.80,0.85},
-    xtick=data,
-    symbolic x coords={DN121, DN121-RSNA, DN121-med, EffB3},
-    xticklabels={DenseNet-121, {DenseNet-121\\+RSNA}, {DenseNet-121\\(medical)}, EfficientNet-B3},
-    xticklabel style={align=center},
-    ,
-    legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, font=\scriptsize},
-    nodes near coords, nodes near coords align={vertical},
-    nodes near coords style={/pgf/number format/fixed, /pgf/number format/fixed zerofill, /pgf/number format/precision=4},
-    every node near coord/.append style={font=\footnotesize, rotate=90, anchor=west, xshift=1pt},
-    enlarge x limits=0.15,
-]
-\addplot[fill=vizblue, draw=vizblue] coordinates {
-    (DN121, 0.7874)(DN121-RSNA, 0.8028)(DN121-med, 0.7648)(EffB3, 0.7795)
-};
-\addplot[fill=vizorange, draw=vizorange, postaction={pattern=north east lines, pattern color=white}] coordinates {
-    (DN121, 0.5862)(DN121-RSNA, 0.6675)(DN121-med, 0.6433)(EffB3, 0.6020)
-};
-\legend{No annotation, With annotation}
-\end{axis}
-\end{tikzpicture}
-\caption{Stage~3b: Annotation consistently degrades AUROC due to shortcut learning and test-time distribution shift.}
-\label{fig:annotation-bar}
-\end{figure}
-
 \subsection{Stage 4 --- MC Dropout uncertainty quantification}
 
 MC Dropout slightly improves AUROC (+0.003) and produces a meaningful sensitivity shift (+3.0 percentage points, \autoref{tab:mc-dropout}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}) --- a 0.056-nat gap that enables the Stage~6 triage policy.
 
 \begin{table}[!t]
 \centering
-\caption{MC Dropout vs deterministic inference (DenseNet-121/concat).}
-\label{tab:mc-dropout}
+\caption{MC Dropout vs deterministic inference (DenseNet-121/concat), and predictive entropy by class ($N=20$ MC passes, 2,000 test pairs).}
+\label{tab:mc-dropout}\label{tab:mc-entropy}
 {\footnotesize\setlength{\tabcolsep}{3pt}%
 \begin{tabular}{|p{1.9cm}|c|c|c|c|c|}
 \hline
@@ -591,13 +541,7 @@ Deterministic & 0.8073 & 0.7374 & 0.7249 & 0.5152 & 0.3304 \\
 \hline
 \textbf{MC Dropout} & \textbf{0.8099} & \textbf{0.7677} & \textbf{0.7007} & \textbf{0.5253} & \textbf{0.3138} \\
 \hline
-\end{tabular}}
-\end{table}
-
-\begin{table}[!t]
-\centering
-\caption{Predictive entropy by class ($N=20$ MC passes, 2,000 test pairs).}
-\label{tab:mc-entropy}
+\end{tabular}\\[6pt]
 \begin{tabular}{|l|c|c|}
 \hline
 \textbf{Entropy} & \textbf{Negatives ($n=1{,}901$)} & \textbf{Positives ($n=99$)} \\
@@ -608,9 +552,7 @@ Median  & 0.5310 & 0.6221 \\
 \hline
 Std dev & 0.1436 & 0.1370 \\
 \hline
-
-\hline
-\end{tabular}
+\end{tabular}}
 \par\vspace{3pt}{\raggedright\footnotesize Gap: $+$0.056 nats. Higher entropy $\Rightarrow$ refer high-uncertainty cases.\par}
 \end{table}
 
@@ -622,31 +564,32 @@ Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three br
 
 \begin{table}[!t]
 \centering
-\caption{Best ensemble result (mean probability, TTA$\times$5).}
+\caption{Best ensemble result (mean probability, TTA$\times$5) on \vindr{} (2{,}000 pairs, 99 cancers) and zero-shot on \rsna{} (4{,}764 pairs, 110 cancers).}
 \label{tab:ensemble}
 {\footnotesize\setlength{\tabcolsep}{4pt}%
-\begin{tabular}{|l|c|}
+\begin{tabular}{|l|c|c|}
 \hline
-\textbf{Metric} & \textbf{Ensemble (N=16, TTA=5)} \\
+\textbf{Metric} & \textbf{\vindr{}} & \textbf{\rsna{} (zero-shot)} \\
 \hline
-AUROC & 0.8458 \\
+AUROC & 0.8458 & 0.6008 [0.5577--0.6585] \\
 \hline
-Sensitivity & 0.7374 \\
+Sensitivity & 0.7374 & 0.3909 \\
 \hline
-Specificity & 0.8296 \\
+Specificity & 0.8296 & 0.7598 \\
 \hline
-F1 & 0.2944 \\
+F1 & 0.2944 & --- \\
 \hline
-PPV & 0.184 \\
+PPV & 0.184 & --- \\
 \hline
-S@90\% & 0.6566 \\
+S@90\% & 0.6566 & 0.1636 \\
 \hline
-S@95\% & 0.5657 \\
+S@95\% & 0.5657 & --- \\
 \hline
-Threshold & 0.3414 \\
+Threshold & 0.3414 & --- \\
 \hline
 \end{tabular}}
 \par\vspace{3pt}{\raggedright\footnotesize PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).\par}
+\par{\raggedright\footnotesize ---: not reported for \rsna{}.\par}
 \end{table}
 
 This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
@@ -728,23 +671,7 @@ Our best ensemble (AUROC=0.8458) exceeds MamT4 \cite{18} (AUROC=0.840), but MamT
 
 \subsection{External validation on \rsna{}}
 
-The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:external-validation}.
-
-\begin{table}[!t]
-\centering
-\caption{External validation: \vindr{} (2{,}000 pairs, 99 cancers) vs.\ \rsna{} (4{,}764 pairs, 110 cancers).}
-\label{tab:external-validation}
-{\scriptsize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\textbf{Dataset} & \textbf{AUROC [95\% CI]} & \textbf{S@90\%} & \textbf{Sens} & \textbf{Spec} \\
-\hline
-\vindr{} & 0.8458 & 0.6566 & 0.7374 & 0.8296 \\
-\hline
-\rsna{} & 0.6008 [0.5577--0.6585] & 0.1636 & 0.3909 & 0.7598 \\
-\hline
-\end{tabular}}
-\end{table}
+The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:ensemble}.
 
 Three factors may drive the gap: (1) Vietnamese vs United States breast density distribution and lesion prevalence \cite{1,11}; (2) different FFDM equipment and post-processing pipelines; (3) the S@90\%spec drop ($-75.1\%$) is particularly stark at the clinical operating point, suggesting the conservative side of the decision surface is most affected by domain shift.
 
