@@ -83,9 +83,7 @@ Deep learning has dramatically improved the situation. CNNs trained on hundreds 
 
 The \vindr{} benchmark \cite{1} is a 20,000-image, patient-level, 4-view FFDM dataset. Three gaps in the literature are evident. \textbf{(i) Single-view dominance.} Most published \vindr{} results train one image at a time. \textbf{(ii) Spatial cross-view attention is underexplored.} Existing multi-view designs typically concatenate global features. \textbf{(iii) Uncertainty quantification and triage simulation are rare.} No published study has applied MC Dropout to \vindr{} and simulated a Verboom-style triage policy \cite{12}.
 
-This paper makes seven contributions. First, we present a systematic comparison of five single-view CNN backbones. Second, we introduce \textbf{BreastPairNet}, a shared-backbone multi-view network evaluated across twelve backbone$\times$fusion$\times$resolution variants. Third, we propose a \textbf{CrossView Transformer} with bidirectional spatial cross-attention between views. Fourth, a controlled \textbf{bounding-box annotation ablation} documents a consistent negative result across all four architecture pairs. Fifth, a \textbf{16-model ensemble} with TTA achieves AUROC=0.8458, the best result in this study. Sixth, \textbf{MC Dropout} provides calibrated uncertainty estimates with a statistically meaningful entropy gap between positive and negative cases. Seventh, a \textbf{hybrid triage simulation} based on the Verboom framework demonstrates 50\% workload reduction while preserving 87.9\% sensitivity under oracle conditions.
-
-\autoref{fig:pipeline} illustrates the full pipeline. Sensitivity at 90\% specificity (\satninety{}) on \vindr{}: \textbf{0.6566} (best ensemble) vs 0.1636 (\rsna{}). The results suggest that the conservative end of the decision surface is most affected by domain shift, which may be due to a large domain gap between the Vietnamese \vindr{} training data and the \rsna{} screening population.
+We address these gaps with \mamnet{}, a six-stage pipeline (\autoref{fig:pipeline}).
 
 \begin{figure}[!t]
 \centering
@@ -588,17 +586,9 @@ Threshold & 0.3414 & --- \\
 
 This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
 
-\subsubsection{Updated ensemble (25 checkpoints)}
+\subsubsection{Ensemble variants}
 
-Adding all CrossView checkpoints (including lower-epoch snapshots) gives AUROC=0.8441, S@90\%=0.6566 (unchanged), sensitivity=0.7677. The marginal AUROC drop confirms that weaker models drag the mean under mean combination; S@90\% is robust.
-
-\subsubsection{Selective ensemble (top-3 +reg + top-5 CrossView + 3 asymmetry)}
-
-11 models, TTA$\times$5: AUROC=0.8446, S@90\%=0.6667 (+0.010 over baseline). Marginally better at the clinical operating point; difference is within sampling noise.
-
-\subsubsection{Ensemble comparison}
-
-Across the three configurations, AUROC differences (0.8441--0.8458) are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers a marginal S@90\% benefit (0.6667 vs 0.6566). Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
+Two variants were also evaluated: adding all CrossView checkpoints (25 models, including lower-epoch snapshots) gives AUROC=0.8441, S@90\%=0.6566 and sensitivity=0.7677, and a selective ensemble (top-3 +reg, top-5 CrossView and 3 asymmetry models; 11 models) gives AUROC=0.8446 and S@90\%=0.6667. Across the three configurations, AUROC differences (0.8441--0.8458) are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers a marginal S@90\% benefit (0.6667 vs 0.6566). Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
 
 \subsection{Stage 6 --- Hybrid triage simulation}
 
@@ -677,15 +667,11 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 
 \textbf{CrossView Transformer vs BreastPairNet.} ConvNeXt-Base (AUROC=0.8317) vs EfficientNet-B3 +reg (AUROC=0.8256): $\Delta$=0.006, which is within the $\pm$0.04 percentile bootstrap CI---these models are not statistically separated. One plausible explanation is that exchanging spatial feature maps before global pooling may preserve localisation information that BreastPairNet's independent pooling discards, though confounded by the different backbone architectures.
 
-\textbf{Medical pretraining.} Chest-X-ray features (lung parenchyma, mediastinum, rib edges) may be domain-mismatched to mammographic texture, which could explain why ImageNet initialisation outperformed torchxrayvision chest-X-ray weights (AUROC 0.7874 vs 0.7648). However, as these configurations also differ in other ways, this interpretation is tentative.
-
 \textbf{Bounding-box shortcut learning.} Painted boxes provide a texture shortcut perfectly correlated with the cancer label during training but absent at test time. This pattern is consistent with well-documented shortcut learning phenomena in medical imaging. Potential remedies may include box-dropout regularisation or test-time box injection via a lesion detector.
 
 \textbf{Why adding the highest-AUROC model to the ensemble can reduce AUROC.} Adding ConvNeXt-Base (the highest individual AUROC, 0.8317) to the 16-model BreastPairNet ensemble reduces overall AUROC from 0.8458 to 0.8441. This is a well-known property of ensemble methods: performance gain comes from \emph{error diversity}, not from constituent model rank. ConvNeXt-Base shares the CrossView Transformer architecture with the DenseNet-121 and EfficientNet-B3 CrossView members already present in the expanded ensemble; its error profile is therefore correlated with those members, contributing no new coverage of failure modes. Additionally, mean-probability pooling is sensitive to score miscalibration: a model whose probability outputs are systematically over- or under-confident can shift the pooled mean away from the Youden-optimal threshold for the ensemble, reducing AUC even when the individual model's rank ordering is strong. The selective ensemble partially mitigates this by prioritising diversity (three +reg BreastPairNet, five CrossView, three asymmetry models) over including the single best-ranked model.
 
 \textbf{PPV and triage utility.} PPV at the Youden threshold ranges from 0.109 to 0.263 across Stage~2 models and 0.117 to 0.169 across Stage~3 models, consistent with the 4.95\% positive prevalence in \vindr{}. The ensemble achieves PPV=0.184 (73 true positives, 324 false positives at threshold 0.3414). In a triage context, PPV governs recall burden: at PPV=0.184, approximately 1 in 5.4 AI-flagged cases is cancer-positive, comparable to published AI-assisted triage operating points (PPV 15--25\% at high-sensitivity settings). Screening prevalence is typically lower than \vindr{}'s 4.95\%, so deployed PPV would be correspondingly lower; calibrated probability outputs and threshold adjustment for local prevalence would be required before clinical application.
-
-\textbf{MC Dropout uncertainty.} The +0.003 AUROC gain from MC Dropout is within the 95\% percentile bootstrap CI and should not be over-interpreted. The more clinically meaningful finding is the sensitivity boost (+3.0 percentage points, AUROC 0.8073$\to$0.8099) and the 0.056-nat entropy gap between cancer-positive and cancer-negative classes, which enables the Stage~6 triage protocol.
 
 \textbf{Triage simulation.} Under realistic 85\% radiologist sensitivity \cite{17}, K=50\% yields only 77.3\% overall sensitivity---10.6 percentage points below the oracle result (87.9\%). These simulations suggest K$\leq$40\% may be required to maintain overall sensitivity above the 80\% clinical floor; prospective validation with real reader sensitivity data would be needed to confirm these thresholds.
 
@@ -694,8 +680,6 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 Because all models were evaluated on the \emph{same} 2,000 test pairs, \emph{paired} bootstrap resampling---which accounts for within-pair correlation and yields narrower confidence intervals---is the appropriate test for comparing models in this study. Under paired resampling, the ensemble's cumulative gain over Stage~1 DenseNet-121 ($\Delta=0.089$ AUROC) is expected to reach statistical separation; adjacent-stage gains, being an order of magnitude smaller, are unlikely to survive even paired testing given the positive-pair count. Formal paired bootstrap tests will be reported alongside the retrained model results.
 
 The key statistical claim of this paper is therefore not that each pipeline stage is individually significantly better than the previous, but rather that the full pipeline cumulatively and substantially improves upon single-view CNN baselines, and that the ablation study identifies which components contribute positively or negatively to that gain.
-
-\textbf{Contribution relative to MamT4.} A reviewer might ask whether \mamnet{} offers meaningful progress given that MamT4 \cite{18} reports AUROC=0.840 on \vindr{}. Three points distinguish the contributions. First, MamT4 excludes BI-RADS~3 cases from evaluation whereas \mamnet{} retains them as negatives, making the test set strictly harder and the two AUROC values not directly comparable. Second, \mamnet{} contributes a controlled ablation study that isolates the effect of multi-view fusion, regularisation, spatial cross-attention, and ensemble size---components that MamT4 does not systematically ablate. Third, \mamnet{} adds uncertainty quantification (Stage~4) and a hybrid triage simulation (Stage~6) grounded in a published clinical framework \cite{12}, enabling a workload-reduction analysis that MamT4 does not provide. These dimensions complement rather than compete with MamT4's classification performance.
 
 \textbf{Limitations.} (i) Small positive test count (99 pairs) limits fine-grained comparison; (ii) large domain gap to United States FFDM (AUROC=0.6008 on \rsna{}); (iii) MamT4 comparison uses a slightly different BI-RADS exclusion; (iv) 7,054 non-CC/MLO RSNA images excluded from pair construction.
 
