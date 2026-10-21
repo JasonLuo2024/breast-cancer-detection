@@ -68,7 +68,7 @@ St.\ John's, NL, Canada}
 \maketitle
 
 \begin{abstract}
-Most published work on the VinDr-Mammo benchmark processes one view at a time, ignoring the CC/MLO pairing that radiologists rely on. We address this by building MamNet-6, a six-stage pipeline that progressively adds multi-view fusion, spatial cross-attention, uncertainty quantification, and hybrid triage simulation, and we validate it zero-shot on the RSNA 2022 dataset. In the original pipeline, DenseNet-121 achieved an AUROC of 0.756 as a single-view baseline. BreastPairNet, a shared-backbone network that jointly processes CC and MLO views, brought this to 0.826 [95\% CI 0.776--0.871] and the CrossView Transformer to 0.832 [0.783--0.875]; individual stage gains sit within overlapping confidence intervals, so the cumulative improvement is the more reliable comparison. For the final models, DICOMs were converted with the stored Modality and VOI LUTs at 1152$\times$896 and epochs were selected by patient-stratified five-fold cross-fitting: focal CrossView reached an out-of-fold AUROC of 0.8212 [0.7933--0.8487], and a frozen equal-weight six-component ensemble reached 0.8500 [0.8016--0.8949] on the 2,000-breast official test. Also in the original pipeline, hybrid triage at 50\% AI reads preserved 87.9\% sensitivity under oracle conditions, and two unexpected findings stand out: bounding-box annotations degraded AUROC by 0.12--0.20, suggesting the model learns to exploit box-region features rather than the underlying pathology, and zero-shot transfer to RSNA 2022 yielded an AUROC of 0.601, pointing to a real domain gap between Vietnamese and North American screening populations.
+Most published work on the VinDr-Mammo benchmark processes one view at a time, ignoring the CC/MLO pairing that radiologists rely on. We address this by building MamNet-6, a six-stage pipeline that progressively adds multi-view fusion, spatial cross-attention, uncertainty quantification, and hybrid triage simulation, and we validate it zero-shot on the RSNA 2022 dataset. DenseNet-121 achieved an AUROC of 0.756 as a single-view baseline. BreastPairNet, a shared-backbone network that jointly processes CC and MLO views, brought this to 0.826 [95\% CI 0.776--0.871] and the CrossView Transformer to 0.832 [0.783--0.875]; individual stage gains sit within overlapping confidence intervals, so the cumulative improvement is the more reliable comparison. The original 16-model ensemble with test-time augmentation achieved an AUROC of 0.846. In a subsequent extension, we replaced the historical PNG conversion with DICOM Modality/VOI-LUT processing and used patient-stratified five-fold, cross-fitted epoch selection. Focal CrossView reached OOF AUROC 0.8212 [0.7933--0.8487]; a frozen equal-weight six-component checkpoint snapshot reached 0.8500 [0.8016--0.8949] on the 2,000-breast official test. The latter is a valid fixed-snapshot measurement, but its nominal +0.0042 increase over the original ensemble is not a statistically established improvement. Hybrid triage at 50\% AI reads preserved 87.9\% sensitivity under oracle conditions. Two unexpected findings stand out: bounding-box annotations degraded AUROC by 0.12--0.20, suggesting the model learns to exploit box-region features rather than the underlying pathology, and zero-shot transfer to RSNA 2022 yielded an AUROC of 0.601, pointing to a real domain gap between Vietnamese and North American screening populations.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -163,13 +163,13 @@ The \rsna{} dataset comprises 54,706 screening DICOMs from 11,913 patients. Afte
 
 \subsection{DICOM Preprocessing}
 
-Original pipeline, four steps: (1) decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) standardise breast orientation so that the breast faces right---a horizontal flip is applied when the mean intensity of the left image half exceeds the right, since breast tissue is brighter than the background field. Output: single-channel 8-bit PNG replicated to 3 channels.
+Four-step pipeline: (1) decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) standardise breast orientation so that the breast faces right---a horizontal flip is applied when the mean intensity of the left image half exceeds the right, since breast tissue is brighter than the background field. Output: single-channel 8-bit PNG replicated to 3 channels.
 
-\subsection{Final models: VOI-LUT conversion and cross-fitted selection}
+\subsection{VOI-LUT extension and cross-fitted selection}
 
-The final models replace the original PNG conversion with the stored DICOM Modality LUT and VOI LUT, applied before 8-bit conversion, and keep the same orientation standardisation. They use a fixed six-component family at 1152$\times$896: Stage~1 (DenseNet-121), three Stage~2 BreastPairNet variants (EfficientNet-B3 attention: default, focal $\alpha=0.75$, and sampler power 0.5), and two CrossView variants (ConvNeXt-Base: focal $\alpha=0.75$ and sampler power 0.5).
+The original pipeline used percentile clipping and CLAHE. In the extension, we instead applied the stored DICOM Modality LUT and VOI LUT before 8-bit PNG conversion, preserving the acquisition-provided presentation transform. We retained the historical orientation standardisation and trained the same six components: Stage~1, three Stage~2 variants (default, focal $\alpha=0.75$, and sampler power 0.5), and two CrossView variants (focal $\alpha=0.75$ and sampler power 0.5).
 
-The 4,000 official-training patients (8,000 breasts) were divided into five patient-stratified folds, giving $6\times5=30$ checkpoints. For each held-out fold, the epoch was selected only from the other four folds using the mean AUROC over a three-epoch window, and the held-out predictions were pooled as out-of-fold (OOF) predictions; every OOF score therefore comes from a model that did not train on that patient. On the official test, the five fold predictions are averaged within each component and the six components are averaged with equal weight, without test-time augmentation. The test was evaluated only after the checkpoint snapshot and component weights were fixed. All other results in this paper (Stage~1 backbone comparison, Stage~2 and Stage~3 ablations, annotation ablation, MC Dropout, original ensemble, triage, and \rsna{} validation) come from the original pipeline: percentile clipping and CLAHE, 224--512\,px input, and one held-out validation slice.
+For development, the 4,000 official-training patients were divided into five patient-stratified folds (8,000 breasts total). For each held-out fold, its epoch was selected only from the other four folds using the mean AUC over a three-epoch window; all held-out predictions were then pooled as OOF predictions. Thus, every OOF score was generated by a model that did not train on that patient. The official test was evaluated only after the checkpoint snapshot and equal component weights were fixed; test results did not alter checkpoint, preprocessing, model, or weight selection.
 
 \subsection{Single-view CNN Backbones (Stage 1)}
 
@@ -556,13 +556,13 @@ Std dev & 0.1436 & 0.1370 \\
 
 \subsection{Stage 5 --- Model ensemble}
 
-\subsubsection{Original-pipeline ensemble (16 BreastPairNet models)}
+\subsubsection{Original ensemble (16 BreastPairNet models)}
 
-Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three breast-asymmetry models and five-fold test-time augmentation (TTA$\times$5). \textbf{Best original-pipeline result}: AUROC=0.8458, sensitivity=0.7374, specificity=0.8296, F1=0.2944, S@90\%=0.6566, S@95\%=0.5657 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26; \autoref{tab:ensemble}).
+Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three breast-asymmetry models and five-fold test-time augmentation (TTA$\times$5). \textbf{Best result in the study}: AUROC=0.8458, sensitivity=0.7374, specificity=0.8296, F1=0.2944, S@90\%=0.6566, S@95\%=0.5657 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26; \autoref{tab:ensemble}).
 
 \begin{table}[!t]
 \centering
-\caption{Original-pipeline ensemble result (mean probability, TTA$\times$5) on \vindr{} (2{,}000 pairs, 99 cancers) and zero-shot on \rsna{} (4{,}764 pairs, 110 cancers).}
+\caption{Best ensemble result (mean probability, TTA$\times$5) on \vindr{} (2{,}000 pairs, 99 cancers) and zero-shot on \rsna{} (4{,}764 pairs, 110 cancers).}
 \label{tab:ensemble}
 {\footnotesize\setlength{\tabcolsep}{4pt}%
 \begin{tabular}{|l|c|c|}
@@ -596,41 +596,29 @@ This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg mo
 
 Two variants were also evaluated: adding all CrossView checkpoints (25 models, including lower-epoch snapshots) gives AUROC=0.8441, S@90\%=0.6566 and sensitivity=0.7677, and a selective ensemble (top-3 +reg, top-5 CrossView and 3 asymmetry models; 11 models) gives AUROC=0.8446 and S@90\%=0.6667. Across the three configurations, AUROC differences (0.8441--0.8458) are within the $\pm$0.04 percentile bootstrap CI; the selective ensemble offers a marginal S@90\% benefit (0.6667 vs 0.6566). Full metrics (specificity, F1, threshold) were only computed for the primary 16-model configuration; secondary configurations were evaluated on AUROC and the clinical operating point (S@90\%) only.
 
-\subsubsection{Final models (VOI-LUT, five-fold cross-fitted)}
+\subsubsection{VOI-LUT five-fold extension}
 
 \begin{table}[!t]
 \centering
-\caption{Final models on \vindr{} (BI-RADS 4/5 versus 1/2/3, breast level). OOF: five-fold cross-fitted out-of-fold predictions on the official training partition (8,000 breasts). Test: frozen snapshot on the official test (2,000 breasts, 99 positive). 95\% CIs by patient-level bootstrap. OOF and test rows answer different questions and are not interchangeable.}
+\caption{Updated VOI-LUT extension on VinDr-Mammo, BI-RADS 4/5 versus 1/2/3 at breast level. OOF and official-test rows answer different evaluation questions and must not be compared as interchangeable estimates.}
 \label{tab:voi-extension}
-{\footnotesize\setlength{\tabcolsep}{3pt}%
-\begin{tabular}{|l|c|c|}
+{\scriptsize\setlength{\tabcolsep}{2pt}%
+\begin{tabular}{|p{1.62cm}|p{1.75cm}|p{1.72cm}|}
 \hline
-\textbf{Model} & \textbf{Evaluation} & \textbf{AUROC [95\% CI]} \\
+\textbf{Score} & \textbf{Evaluation} & \textbf{AUROC [95\% CI]} \\
 \hline
-CrossView focal $\alpha=0.75$ & OOF & 0.8212 [0.7933--0.8487] \\
+CrossView focal $\alpha=0.75$ & Five-fold cross-fitted OOF & 0.8212 [0.7933--0.8487] \\
 \hline
-CrossView sampler 0.5 & OOF & 0.7517 [0.7231--0.7824] \\
+Constrained CrossView blend & Five-fold cross-fitted OOF & 0.8251 [not superior to focal] \\
 \hline
-CrossView blend & OOF & 0.8251 [0.7978--0.8534] \\
+Stage~2 default & Frozen official-test snapshot & 0.8424 [0.7926--0.8880] \\
 \hline
-Stage~1 & Test & 0.5899 [0.5249--0.6532] \\
-\hline
-Stage~2 default & Test & 0.8424 [0.7926--0.8880] \\
-\hline
-Stage~2 focal $\alpha=0.75$ & Test & 0.8296 [0.7781--0.8787] \\
-\hline
-Stage~2 sampler 0.5 & Test & 0.8296 [0.7735--0.8814] \\
-\hline
-CrossView focal $\alpha=0.75$ & Test & 0.8173 [0.7606--0.8701] \\
-\hline
-CrossView sampler 0.5 & Test & 0.8296 [0.7801--0.8762] \\
-\hline
-\textbf{Equal six-component ensemble} & \textbf{Test} & \textbf{0.8500 [0.8016--0.8949]} \\
+Equal six-component ensemble & Frozen official-test snapshot & \textbf{0.8500 [0.8016--0.8949]} \\
 \hline
 \end{tabular}}
 \end{table}
 
-Focal CrossView was the stronger of the two CrossView components in OOF evaluation (0.8212 vs 0.7517; paired difference 0.0695, 95\% CI [0.0426, 0.0955]). A constrained two-CrossView blend reached 0.8251, but its paired OOF difference from focal CrossView was not supported (95\% CI $[-0.0029,0.0131]$). On the official test, equal averaging of the five fold checkpoints within each of the six components yielded AUROC=0.8500 (\autoref{tab:voi-extension}); the snapshot was repeated with byte-identical predictions after the remaining training completed.
+The focal CrossView model was the strongest single training-only component (OOF AUROC=0.8212). A constrained two-CrossView blend reached 0.8251, but its paired OOF difference from focal CrossView was not supported (95\% CI $[-0.0029,0.0131]$). For the separately frozen official-test snapshot, equal averaging of five checkpoints from each of the six components yielded AUROC=0.8500. The snapshot was repeated with byte-identical predictions after remaining training completed. It is therefore a valid score for that fixed recipe, but it does not establish superiority over the original 0.8458 ensemble: the observed difference is only +0.0042 and no paired comparison against the original ensemble was predeclared.
 
 \subsection{Stage 6 --- Hybrid triage simulation}
 
@@ -693,11 +681,11 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
 
 \subsection{Comparison to literature}
 
-Our final six-component ensemble (AUROC=0.8500) exceeds MamT4 \cite{18} (AUROC=0.840), but MamT4 excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
+Our best ensemble (AUROC=0.8458) exceeds MamT4 \cite{18} (AUROC=0.840), but MamT4 excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, making the AUROC values not directly comparable. McKinney et al. \cite{11} (AUC=0.889) and Yoon et al. \cite{4} (pooled AUC=0.87) report on different datasets and are likewise not directly comparable.
 
 \subsection{External validation on \rsna{}}
 
-The original-pipeline ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:ensemble}.
+The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{}. Full metrics are shown in \autoref{tab:ensemble}.
 
 Three factors may drive the gap: (1) Vietnamese vs United States breast density distribution and lesion prevalence \cite{1,11}; (2) different FFDM equipment and post-processing pipelines; (3) the S@90\%spec drop ($-75.1\%$) is particularly stark at the clinical operating point, suggesting the conservative side of the decision surface is most affected by domain shift.
 
@@ -717,11 +705,11 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 
 \textbf{Statistical comparisons and paired testing.} With only 99 cancer-positive test pairs, the 95\% percentile bootstrap CI width is $\pm$0.04--0.05 AUROC, so \emph{adjacent-stage} differences cannot be claimed as individually significant: Stage~2 vs Stage~3 ($\Delta=0.006$), Stage~3 vs ensemble ($\Delta=0.014$), and BreastPairNet vs CrossView Transformer (95\% CIs 0.776--0.871 vs 0.783--0.875) all have substantially overlapping intervals. The percentage gains throughout this paper (+9.1\%, +10.0\%, +11.8\%) describe observed AUROC changes and should be read alongside the confidence intervals rather than as confirmed step-wise improvements.
 
+\textbf{Preprocessing and cross-fitted extension.} The VOI-LUT extension shows that DICOM presentation handling is a model-design choice rather than a neutral file conversion detail. Its focal CrossView OOF result (0.8212) provides patient-held-out development evidence under cross-fitted epoch selection, while the 0.8500 frozen-snapshot test result is a separate fixed-recipe measurement. The snapshot's nominal +0.0042 AUROC over the original 0.8458 ensemble is within the uncertainty expected for 99 positives and should not be described as a demonstrated improvement. A future external cohort or a predeclared paired comparison is required to establish whether VOI-LUT changes performance.
+
 Under \emph{paired} bootstrap resampling, which suits models evaluated on the same 2,000 test pairs, the ensemble's cumulative gain over Stage~1 DenseNet-121 ($\Delta=0.089$ AUROC) is expected to reach statistical separation; adjacent-stage gains, being an order of magnitude smaller, are unlikely to survive even paired testing given the positive-pair count. Formal paired bootstrap tests will be reported alongside the retrained model results.
 
 The key statistical claim of this paper is therefore not that each pipeline stage is individually significantly better than the previous, but rather that the full pipeline cumulatively and substantially improves upon single-view CNN baselines, and that the ablation study identifies which components contribute positively or negatively to that gain.
-
-\textbf{Final models.} The OOF result (focal CrossView, 0.8212) is patient-held-out development evidence under cross-fitted epoch selection, while the six-component test result (0.8500) is a separate measurement of a fixed recipe. Because the final models changed DICOM conversion, input resolution and the selection protocol together, the effect of VOI-LUT conversion alone is not isolated here; a frozen protocol on an external cohort is needed to establish it.
 
 \textbf{Contribution relative to MamT4.} A reviewer might ask whether \mamnet{} offers meaningful progress given that MamT4 \cite{18} reports AUROC=0.840 on \vindr{}. Beyond the evaluation difference noted in the comparison to literature, \mamnet{} contributes a controlled ablation study that isolates the effect of multi-view fusion, regularisation, spatial cross-attention, and ensemble size---components that MamT4 does not systematically ablate. \mamnet{} also adds uncertainty quantification (Stage~4) and a hybrid triage simulation (Stage~6) grounded in a published clinical framework \cite{12}, enabling a workload-reduction analysis that MamT4 does not provide. These dimensions complement rather than compete with MamT4's classification performance.
 
@@ -731,7 +719,7 @@ The key statistical claim of this paper is therefore not that each pipeline stag
 
 \section{Conclusion}
 
-We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{}. In the original pipeline: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). The final models, with DICOM Modality/VOI-LUT conversion at 1152$\times$896 and patient-stratified cross-fitted epoch selection, reached an OOF AUROC of 0.8212 [0.7933--0.8487] for focal CrossView and an official-test AUROC of 0.8500 [0.8016--0.8949] for the equal six-component ensemble. Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
+We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). The VOI-LUT extension adds DICOM presentation-aware PNG conversion and patient-stratified cross-fitted epoch selection: focal CrossView achieved OOF AUROC=0.8212 [0.7933--0.8487], and a frozen equal six-component snapshot achieved official-test AUROC=0.8500 [0.8016--0.8949]. The latter is a valid fixed-snapshot measurement but not a statistically established improvement over the original 0.8458 ensemble. Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
 
 \section*{Author Contributions}
 
