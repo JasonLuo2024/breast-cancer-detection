@@ -155,7 +155,7 @@ The official split is 4,000 training patients (16,000 images) and 1,000 test pat
 
 \subsection{\rsna{} (external dataset)}
 
-The \rsna{} dataset comprises 54,706 screening DICOMs from 11,913 patients. After 8-bit normalisation identical to \vindr{} preprocessing, approximately 29,519 images required \texttt{pylibjpeg} to decode JPEG Lossless DICOMs. Non-CC/MLO views were excluded. The final paired dataset contains 23,826 CC+MLO pairs (19,062 training, 4,764 validation) on an 80/20 patient-level split.
+The \rsna{} dataset comprises 54,706 screening DICOMs from 11,913 patients, normalised as for \vindr{} (about 29,519 JPEG Lossless files decoded with \texttt{pylibjpeg}). Excluding non-CC/MLO views leaves 23,826 CC+MLO pairs (19,062 training, 4,764 validation; 80/20 patient-level split).
 
 \section{Methods}
 
@@ -375,33 +375,33 @@ The best single model is \textbf{EfficientNet-B3 + attention + +reg} at AUROC=0.
 \centering
 \caption{BreastPairNet ablation across backbone, fusion, and resolution.}
 \label{tab:breastpairnet}
-\begin{tabular}{|p{0.20\textwidth}|p{0.08\textwidth}|p{0.07\textwidth}|p{0.18\textwidth}|p{0.06\textwidth}|p{0.06\textwidth}|p{0.05\textwidth}|p{0.15\textwidth}|}
+\begin{tabular}{|p{0.20\textwidth}|p{0.08\textwidth}|p{0.07\textwidth}|p{0.18\textwidth}|p{0.06\textwidth}|p{0.05\textwidth}|p{0.15\textwidth}|}
 \hline
-\textbf{Architecture} & \textbf{Fusion} & \textbf{Image} & \textbf{Best AUROC [95\% CI]} & \textbf{F1} & \textbf{Sens} & \textbf{PPV} & \textbf{S@90\% [95\% CI]} \\
+\textbf{Architecture} & \textbf{Fusion} & \textbf{Image} & \textbf{Best AUROC [95\% CI]} & \textbf{Sens} & \textbf{PPV} & \textbf{S@90\% [95\% CI]} \\
 \hline
-ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.2350 & 0.5354 & 0.151 & 0.4646 [0.3736--0.5673] \\
+ResNet-50 & concat & 384 px & 0.7467 [0.6921--0.7998] & 0.5354 & 0.151 & 0.4646 [0.3736--0.5673] \\
 \hline
-ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.2522 & 0.5859 & 0.161 & 0.5051 [0.4023--0.6019] \\
+ResNet-50 & attention & 224 px & 0.7847 [0.7324--0.8338] & 0.5859 & 0.161 & 0.5051 [0.4023--0.6019] \\
 \hline
-ResNet-50 & attention & 512 px & 0.7922 [0.7339--0.8429] & 0.2093 & 0.7475 & 0.122 & 0.5152 [0.4130--0.6214] \\
+ResNet-50 & attention & 512 px & 0.7922 [0.7339--0.8429] & 0.7475 & 0.122 & 0.5152 [0.4130--0.6214] \\
 \hline
-ResNet-50 & concat & 224 px & 0.7962 [0.7428--0.8445] & 0.2363 & 0.6970 & 0.142 & 0.4949 [0.3958--0.5977] \\
+ResNet-50 & concat & 224 px & 0.7962 [0.7428--0.8445] & 0.6970 & 0.142 & 0.4949 [0.3958--0.5977] \\
 \hline
-DenseNet-121 & attention & 224 px & 0.8014 [0.7487--0.8515] & 0.2800 & 0.6364 & 0.179 & 0.5758 [0.4660--0.6667] \\
+DenseNet-121 & attention & 224 px & 0.8014 [0.7487--0.8515] & 0.6364 & 0.179 & 0.5758 [0.4660--0.6667] \\
 \hline
-EfficientNet-B3 & attention & 224 px & 0.8048 [0.7530--0.8556] & 0.2138 & 0.7677 & 0.124 & 0.5455 [0.4476--0.6449] \\
+EfficientNet-B3 & attention & 224 px & 0.8048 [0.7530--0.8556] & 0.7677 & 0.124 & 0.5455 [0.4476--0.6449] \\
 \hline
-DenseNet-121 & concat & 224 px & 0.8073 [0.7577--0.8504] & 0.2101 & 0.7374 & 0.122 & 0.5152 [0.4141--0.6100] \\
+DenseNet-121 & concat & 224 px & 0.8073 [0.7577--0.8504] & 0.7374 & 0.122 & 0.5152 [0.4141--0.6100] \\
 \hline
-DenseNet-121 \textbf{+reg} & attention & 224 px & 0.8097 [0.7594--0.8591] & 0.2033 & 0.7980 & 0.117 & 0.5556 [0.4301--0.6458] \\
+DenseNet-121 \textbf{+reg} & attention & 224 px & 0.8097 [0.7594--0.8591] & 0.7980 & 0.117 & 0.5556 [0.4301--0.6458] \\
 \hline
-DenseNet-121 & attention & 512 px & 0.8150 [0.7675--0.8617] & 0.1928 & 0.8081 & 0.109 & 0.5455 [0.4476--0.6408] \\
+DenseNet-121 & attention & 512 px & 0.8150 [0.7675--0.8617] & 0.8081 & 0.109 & 0.5455 [0.4476--0.6408] \\
 \hline
-DenseNet-121 \textbf{+reg} & concat & 224 px & 0.8177 [0.7659--0.8649] & 0.2357 & 0.7677 & 0.139 & 0.6061 [0.5047--0.7000] \\
+DenseNet-121 \textbf{+reg} & concat & 224 px & 0.8177 [0.7659--0.8649] & 0.7677 & 0.139 & 0.6061 [0.5047--0.7000] \\
 \hline
-EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273 & 0.174 & 0.5556 [0.4495--0.6505] \\
+EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.7273 & 0.174 & 0.5556 [0.4495--0.6505] \\
 \hline
-\textbf{EfficientNet-B3 +reg} & \textbf{attention} & \textbf{224 px} & \textbf{0.8256 [0.7755--0.8707]} & \textbf{0.3701} & \textbf{0.6263} & \textbf{0.263} & \textbf{0.6263 [0.5229--0.7143]} \\
+\textbf{EfficientNet-B3 +reg} & \textbf{attention} & \textbf{224 px} & \textbf{0.8256 [0.7755--0.8707]} & \textbf{0.6263} & \textbf{0.263} & \textbf{0.6263 [0.5229--0.7143]} \\
 \hline
 
 \end{tabular}
@@ -671,9 +671,7 @@ Three factors may drive the gap: (1) Vietnamese vs United States breast density 
 
 \textbf{Statistical comparisons and paired testing.} With only 99 cancer-positive test pairs, the 95\% percentile bootstrap CI width is $\pm$0.04--0.05 AUROC, so \emph{adjacent-stage} differences cannot be claimed as individually significant: Stage~2 vs Stage~3 ($\Delta=0.006$), Stage~3 vs ensemble ($\Delta=0.014$), and BreastPairNet vs CrossView Transformer (95\% CIs 0.776--0.871 vs 0.783--0.875) all have substantially overlapping intervals. The percentage gains throughout this paper (+9.1\%, +10.0\%, +11.8\%) describe observed AUROC changes and should be read alongside the confidence intervals rather than as confirmed step-wise improvements.
 
-Under \emph{paired} bootstrap resampling, which suits models evaluated on the same 2,000 test pairs, the ensemble's cumulative gain over Stage~1 DenseNet-121 ($\Delta=0.089$ AUROC) is expected to reach statistical separation; adjacent-stage gains, being an order of magnitude smaller, are unlikely to survive even paired testing given the positive-pair count. Formal paired bootstrap tests will be reported alongside the retrained model results.
-
-The key statistical claim of this paper is therefore not that each pipeline stage is individually significantly better than the previous, but rather that the full pipeline cumulatively and substantially improves upon single-view CNN baselines, and that the ablation study identifies which components contribute positively or negatively to that gain.
+Under \emph{paired} bootstrap resampling, which suits models evaluated on the same 2,000 test pairs, the ensemble's cumulative gain over Stage~1 DenseNet-121 ($\Delta=0.089$ AUROC) is expected to reach statistical separation; adjacent-stage gains, being an order of magnitude smaller, are unlikely to survive even paired testing given the positive-pair count. Formal paired bootstrap tests will be reported alongside the retrained model results. The key statistical claim is therefore that the full pipeline cumulatively and substantially improves on single-view CNN baselines, and that the ablation identifies which components help or hurt, not that each stage is individually significantly better than the last.
 
 \textbf{Contribution relative to MamT4.} A reviewer might ask whether \mamnet{} offers meaningful progress given that MamT4 \cite{18} reports AUROC=0.840 on \vindr{}. Beyond the evaluation difference noted in the comparison to literature, \mamnet{} contributes a controlled ablation study that isolates the effect of multi-view fusion, regularisation, spatial cross-attention, and ensemble size---components that MamT4 does not systematically ablate. \mamnet{} also adds uncertainty quantification (Stage~4) and a hybrid triage simulation (Stage~6) grounded in a published clinical framework \cite{12}, enabling a workload-reduction analysis that MamT4 does not provide. These dimensions complement rather than compete with MamT4's classification performance.
 
@@ -683,7 +681,7 @@ The key statistical claim of this paper is therefore not that each pipeline stag
 
 \section{Conclusion}
 
-We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{}: \textbf{Stage 1} (DenseNet-121, AUROC=0.7564) $\rightarrow$ \textbf{Stage 2} (BreastPairNet +reg, AUROC=0.8256, +9.1\%) $\rightarrow$ \textbf{Stage 3} (CrossView Transformer, AUROC=0.8317, +10.0\%) $\rightarrow$ \textbf{Stage 4} (MC Dropout uncertainty quantification, entropy gap=0.056 nats) $\rightarrow$ \textbf{Stage 5} (16-model ensemble with TTA, AUROC=0.8458, +11.8\%) $\rightarrow$ \textbf{Stage 6} (hybrid triage simulation). Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
+We have presented \mamnet{}, a six-stage pipeline for breast cancer detection on \vindr{} that rises from a single-view AUROC of 0.7564 to 0.8458 for the 16-model ensemble (+11.8\%). Bounding-box annotations consistently degraded AUROC by 0.12--0.20 due to shortcut learning---the most actionable negative finding. MC Dropout produced a 0.056-nat entropy gap enabling hybrid triage: K=50\% AI reads preserves 87.9\% sensitivity under oracle conditions, but only 77.3\% under realistic 85\% radiologist sensitivity, suggesting K$\leq$40\% is required to stay above the 80\% clinical floor. External validation (\rsna{} AUROC=0.6008) reveals that domain generalisation to United States (US) FFDM---as tested on the \rsna{} screening dataset---remains a critical open challenge.
 
 \section*{Author Contributions}
 
