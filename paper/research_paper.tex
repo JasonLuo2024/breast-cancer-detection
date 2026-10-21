@@ -620,19 +620,34 @@ Std dev & 0.1436 & 0.1370 \\
 
 Mean-probability ensemble of 16 BreastPairNet checkpoints combined with three breast-asymmetry models and five-fold test-time augmentation (TTA$\times$5). \textbf{Best result in the study}: AUROC=0.8458, sensitivity=0.7374, specificity=0.8296, F1=0.2944, S@90\%=0.6566, S@95\%=0.5657 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26; \autoref{tab:ensemble}).
 
-\begin{table*}[!t]
+\begin{table}[!t]
 \centering
 \caption{Best ensemble result (mean probability, TTA$\times$5).}
 \label{tab:ensemble}
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+{\footnotesize\setlength{\tabcolsep}{4pt}%
+\begin{tabular}{|l|c|}
 \hline
-\textbf{Method} & \textbf{AUROC} & \textbf{Sens} & \textbf{Spec} & \textbf{F1} & \textbf{PPV} & \textbf{S@90\%} & \textbf{S@95\%} & \textbf{Threshold} \\
+\textbf{Metric} & \textbf{Ensemble (N=16, TTA=5)} \\
 \hline
-\textbf{Ensemble (N=16, TTA=5)} & \textbf{0.8458} & \textbf{0.7374} & \textbf{0.8296} & \textbf{0.2944} & \textbf{0.184} & \textbf{0.6566} & \textbf{0.5657} & \textbf{0.3414} \\
+AUROC & 0.8458 \\
 \hline
-\end{tabular}
+Sensitivity & 0.7374 \\
+\hline
+Specificity & 0.8296 \\
+\hline
+F1 & 0.2944 \\
+\hline
+PPV & 0.184 \\
+\hline
+S@90\% & 0.6566 \\
+\hline
+S@95\% & 0.5657 \\
+\hline
+Threshold & 0.3414 \\
+\hline
+\end{tabular}}
 \par\vspace{3pt}{\raggedright\footnotesize PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).\par}
-\end{table*}
+\end{table}
 
 This ensemble does \textbf{not} include ConvNeXt-Base or EfficientNet-B3 +reg models.
 
