@@ -494,20 +494,20 @@ DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.165 & 
 
 \begin{table}[!t]
 \centering
-\caption{Bounding-box annotation ablation. Test set always uses original unannotated PNGs.}
+\caption{Bounding-box annotation ablation. Test set always uses original unannotated PNGs; $\Delta$AUROC is relative to the unannotated model in \autoref{tab:crossview}.}
 \label{tab:annotation-ablation}
 {\scriptsize\setlength{\tabcolsep}{2.5pt}%
-\begin{tabular}{|l|>{\raggedright\arraybackslash}p{2.25cm}|>{\raggedright\arraybackslash}p{2.25cm}|c|}
+\begin{tabular}{|l|c|c|}
 \hline
-\textbf{Architecture} & \textbf{No annotation AUROC [95\% CI]} & \textbf{With annotation AUROC [95\% CI]} & \textbf{\(\Delta\)AUROC} \\
+\textbf{Architecture} & \textbf{With annotation AUROC [95\% CI]} & \textbf{\(\Delta\)AUROC} \\
 \hline
-DenseNet-121 & 0.7874 [0.7299--0.8401] & 0.5862 [0.5274--0.6433] & -0.201 \\
+DenseNet-121 & 0.5862 [0.5274--0.6433] & -0.201 \\
 \hline
-DenseNet-121 +RSNA & 0.8028 [0.7484--0.8536] & 0.6675 & -0.135 \\
+DenseNet-121 +RSNA & 0.6675 & -0.135 \\
 \hline
-DenseNet-121 (medical) & 0.7648 [0.7116--0.8210] & 0.6433 [0.5886--0.6966] & -0.122 \\
+DenseNet-121 (medical) & 0.6433 [0.5886--0.6966] & -0.122 \\
 \hline
-EfficientNet-B3 & 0.7795 [0.7276--0.8300] & 0.6020 [0.5460--0.6617] & -0.178 \\
+EfficientNet-B3 & 0.6020 [0.5460--0.6617] & -0.178 \\
 \hline
 \end{tabular}}
 \end{table}
@@ -588,7 +588,7 @@ Two variants were also evaluated: adding all CrossView checkpoints (25 models, i
 
 \subsection{Stage 6 --- Hybrid triage simulation}
 
-Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}; \autoref{fig:triage-sensitivity}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:triage-sweep}).
+Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\% (\autoref{tab:triage-sweep}).
 
 \begin{table}[!t]
 \centering
@@ -615,35 +615,6 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
 \hline
 \end{tabular}}
 \end{table}
-
-\begin{figure}[!t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.9\linewidth, height=4.5cm,
-    xlabel={Exams read by AI alone (\%)},
-    ylabel={Overall sensitivity},
-    xmin=25, xmax=95, ymin=0.65, ymax=1.00,
-    xtick={30,40,50,60,70,80,90},
-    ytick={0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00},
-    legend style={at={(0.97,0.97)}, anchor=north east, font=\scriptsize},
-    grid=both, grid style={line width=0.2pt, draw=gray!30},
-    mark size=2.5pt,
-]
-\addplot[vizblue, mark=*, thick] coordinates {
-    (30,0.9495)(40,0.9192)(50,0.8788)(60,0.8283)(70,0.7677)(80,0.7677)(90,0.7677)
-};
-\addplot[vizorange, mark=square*, thick] coordinates {
-    (30,0.8253)(40,0.8071)(50,0.7727)(60,0.7359)(70,0.6935)(80,0.7207)(90,0.7450)
-};
-\addplot[dashed, gray!70, thick, forget plot] coordinates {(25,0.85)(95,0.85)};
-\node[font=\footnotesize, vizink, anchor=north east] at (axis cs:94,0.846) {85\% floor};
-\legend{Oracle radiologist, 85\% radiologist}
-\end{axis}
-\end{tikzpicture}
-\caption{Stage~6: Overall sensitivity vs.\ AI-read fraction. Dashed line = 85\% clinical sensitivity floor.}
-\label{fig:triage-sensitivity}
-\end{figure}
 
 \subsection{Comparison to literature}
 
