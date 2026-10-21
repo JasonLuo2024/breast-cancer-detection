@@ -114,15 +114,13 @@ We address these gaps with \mamnet{}, a six-stage pipeline (\autoref{fig:pipelin
 
 \section{Related Work}
 
-\textbf{Deep CNN backbones.} Residual networks \cite{7} and densely connected networks \cite{8} underpin almost all modern screening AI systems. CheXNet \cite{6} established DenseNet-121 as a default starting point for chest imaging. EfficientNet \cite{9} introduced compound scaling (B3: 12M parameters). ConvNeXt \cite{16} modernised pure-convolutional design to transformer-level ImageNet accuracy.
+\textbf{CNN backbones.} Residual \cite{7} and densely connected \cite{8} networks underpin most screening AI systems; CheXNet \cite{6} made DenseNet-121 a default starting point for chest imaging, EfficientNet \cite{9} introduced compound scaling, and ConvNeXt \cite{16} brought pure-convolutional design to transformer-level ImageNet accuracy.
 
-\textbf{Multi-view mammography.} Wu et al. \cite{10} trained a four-stream ResNet-22 on 229,426 NYU exams (AUC=0.895), establishing that shared backbones and feature-level aggregation are essential under limited data. McKinney et al. \cite{11} reported AUC=0.889 on UK FFDM, outperforming six radiologists. Cross-view spatial attention outperforms score-level averaging, motivating Stage~3.
+\textbf{Multi-view mammography.} Wu et al. \cite{10} trained a four-stream ResNet-22 on 229,426 NYU exams (AUC=0.895), showing that shared backbones and feature-level aggregation matter under limited data; McKinney et al. \cite{11} reported AUC=0.889 on UK FFDM, outperforming six radiologists.
 
-\textbf{\vindr{}-specific work.} Nguyen et al. \cite{1} released \vindr{} with BI-RADS, density, and lesion-level annotations. Ibragimov et al. \cite{18} proposed MamT4 (AUC=0.840$\pm$0.017). Abdikenov et al. \cite{2} demonstrated CLAHE+YOLOv12 mAP gains; Mellado et al. \cite{3} showed competitive patch-level F1 under limited annotation.
+\textbf{\vindr{}.} Nguyen et al. \cite{1} released \vindr{} with BI-RADS, density, and lesion-level annotations. MamT4 \cite{18} reports AUC=0.840$\pm$0.017; Abdikenov et al. \cite{2} showed CLAHE+YOLOv12 mAP gains, and Mellado et al. \cite{3} competitive patch-level F1 under limited annotation.
 
-\textbf{Class imbalance and focal loss.} Focal loss \cite{5} suppresses easy negatives via $(1-p)^\gamma$ down-weighting; Johnson \& Khoshgoftaar \cite{15} survey algorithm-level imbalance methods.
-
-\textbf{Uncertainty quantification.} Kendall and Gal \cite{13} formalised aleatoric and epistemic uncertainty; MC Dropout provides tractable Bayesian model averaging. Verboom et al. \cite{12} demonstrated 38.1\% workload reduction on 41,469 Dutch screening exams while preserving cancer detection rate.
+\textbf{Imbalance and uncertainty.} Focal loss \cite{5} down-weights easy negatives by $(1-p)^\gamma$, and Johnson and Khoshgoftaar \cite{15} survey algorithm-level imbalance methods. Kendall and Gal \cite{13} distinguish aleatoric from epistemic uncertainty; Verboom et al. \cite{12} reduced workload by 38.1\% on 41,469 Dutch screening exams while preserving cancer detection rate.
 
 \section{Datasets}
 
@@ -163,7 +161,7 @@ The \rsna{} dataset comprises 54,706 screening DICOMs from 11,913 patients. Afte
 
 \subsection{DICOM Preprocessing}
 
-Four-step pipeline: (1) decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) standardise breast orientation so that the breast faces right---a horizontal flip is applied when the mean intensity of the left image half exceeds the right, since breast tissue is brighter than the background field. Output: single-channel 8-bit PNG replicated to 3 channels.
+Four steps: (1) decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) standardise breast orientation so that the breast faces right---a horizontal flip is applied when the mean intensity of the left image half exceeds the right, as breast tissue is brighter than the background. Output: single-channel 8-bit PNG replicated to 3 channels.
 
 \subsection{Single-view CNN Backbones (Stage 1)}
 
@@ -247,7 +245,7 @@ Shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC}
 \draw[arr] (mlp.east) -- (out.west);
 
 \end{tikzpicture}
-\caption{BreastPairNet architecture (Stage~2 of \mamnet{}). CC and MLO images from the same breast pass through a \emph{shared} CNN backbone (weights $\theta$ tied for both views). Each view is independently reduced to a global-average-pooled (GAP) feature vector $\mathbf{f}\in\mathbb{R}^d$; the two vectors are fused by concatenation or attention, then classified by a two-layer MLP with 50\% dropout. The orange dashed box highlights the GAP step — the key design decision that Stage~3 (CrossView Transformer, \autoref{fig:crossview-arch}) replaces with bidirectional spatial cross-attention applied \emph{before} pooling.}
+\caption{BreastPairNet (Stage~2). CC and MLO images share one CNN backbone (tied $\theta$); each view is global-average-pooled (GAP) to $\mathbf{f}\in\mathbb{R}^d$, fused by concatenation or attention, and classified by a two-layer MLP with 50\% dropout. The orange dashed box marks the GAP step that Stage~3 (\autoref{fig:crossview-arch}) replaces with spatial cross-attention \emph{before} pooling.}
 \label{fig:breastpairnet-arch}
 \end{figure*}
 
@@ -321,7 +319,7 @@ Replaces global-pooled fusion with spatial cross-attention. Both views pass thro
       text width=2.8cm] at (5.5, -2.4)
   {\textbf{Key difference vs BreastPairNet:}\\spatial maps before pooling};
 \end{tikzpicture}
-\caption{CrossView Transformer architecture (Stage~3). Unlike BreastPairNet, the backbone output is \emph{not} global-averaged before fusion. Spatial feature maps are flattened to token sequences; a two-layer Transformer encoder applies bidirectional cross-attention ($Q_{CC}$ attends to $K,V$ from MLO and vice versa), enabling the model to localise spatially consistent findings across views before pooling. Best: ConvNeXt-Base, AUROC=0.8317.}
+\caption{CrossView Transformer (Stage~3). Spatial feature maps are flattened to tokens rather than pooled; a two-layer Transformer encoder applies bidirectional cross-attention ($Q_{CC}$ attends to $K,V$ from MLO and vice versa) so spatially consistent findings can be matched across views before pooling. Best: ConvNeXt-Base, AUROC=0.8317.}
 \label{fig:crossview-arch}
 \end{figure*}
 
@@ -331,9 +329,7 @@ Ground-truth boxes (\vindr{}) were drawn as white outlines (40-px line width) on
 
 \subsection{MC Dropout (Stage 4)}
 
-MC Dropout was chosen for uncertainty quantification because it requires no architectural modifications: dropout layers that are normally disabled at test time are kept active, converting a single point prediction into a distribution over outputs without retraining \cite{13}. This makes entropy-based case ranking possible at negligible computational cost.
-
-Concretely, BatchNorm is kept in eval mode while dropout remains active. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is the Youden-optimal cut-off, maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the evaluation set; the same rule is used for every threshold reported in this paper.
+MC Dropout \cite{13} keeps dropout active at test time, turning a single prediction into a distribution without architectural changes or retraining, so entropy-based case ranking costs little. BatchNorm is kept in eval mode while dropout remains active. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is the Youden-optimal cut-off, maximising Youden's~J index ($J = \text{sensitivity} + \text{specificity} - 1$) on the evaluation set; the same rule is used for every threshold reported in this paper.
 
 \subsection{Hybrid Triage (Stage 6)}
 
@@ -341,7 +337,7 @@ Following Verboom et al.\ \cite{12}, cases are sorted by ascending predictive en
 
 \subsection{Training and evaluation}
 
-All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with FP16 mixed-precision (AMP) and AdamW (weight decay 1e-4 for Stage~1; 1e-3 for Stage~2). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, \textbf{\satninety{}} (sensitivity at 90\% specificity), and \textbf{PPV} (positive predictive value, precision at the Youden-optimal threshold). 95\% percentile bootstrap confidence intervals ($n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive). Typical AUROC CI width: $\pm$0.04--0.05. Because all models are evaluated on the same 2,000 test pairs, paired bootstrap resampling is more statistically powerful than independent CIs for head-to-head model comparisons.
+All models trained on NVIDIA RTX 5070 (12\,GB VRAM) with FP16 mixed-precision (AMP) and AdamW (weight decay 1e-4 for Stage~1; 1e-3 for Stage~2). Primary metric: AUROC. Also reported: F1 at Youden threshold, sensitivity, specificity, \textbf{\satninety{}} (sensitivity at 90\% specificity), and \textbf{PPV} (positive predictive value, precision at the Youden-optimal threshold). 95\% percentile bootstrap confidence intervals ($n$=2000 resamples) on the 2,000-pair test split (99 cancer-positive).  Because all models are evaluated on the same 2,000 test pairs, paired bootstrap resampling is more statistically powerful than independent CIs for head-to-head model comparisons.
 
 \section{Experiments and Results}
 
