@@ -67,6 +67,7 @@ breast-cancer-detection/
 │       ├── compute_all_bootstrap_ci.py  # 95% BCa bootstrap CIs (all models)
 │       ├── compute_bootstrap_ci.py  # 95% BCa bootstrap CIs (single model)
 │       └── generate_gradcam.py      # Grad-CAM visualisations
+│   └── voi_lut_extension/           # Preserved CAIR scripts for the VOI-LUT extension
 ├── results/                         # ★ All saved result JSONs (see below)
 │   ├── result_source_map.json       # ★ Maps every paper claim → source file
 │   ├── bootstrap_ci_all.json        # Per-model AUC + S@90 point estimates + CIs
