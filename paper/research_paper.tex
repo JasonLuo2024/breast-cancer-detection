@@ -78,7 +78,7 @@ breast cancer detection, mammography, multi-view learning, uncertainty quantific
 
 \section{Introduction}
 
-\IEEEPARstart{B}{reast} cancer is the most frequently diagnosed cancer and the leading cause of cancer death among women worldwide, accounting for 11.6\% of all new cancer cases in 2022 \cite{20}. Screening with full-field digital mammography (FFDM) reduces breast-cancer mortality but imposes a heavy reading burden, and historical hand-engineered detection systems failed to deliver measurable benefit in routine screening \cite{17}. Convolutional neural networks (CNNs) now reach or exceed radiologist area under the receiver operating characteristic curve (AUROC) \cite{11}, and meta-analyses report pooled AUROC of 0.87 for AI on digital mammography versus 0.81 for radiologists \cite{4}.
+\IEEEPARstart{B}{reast} cancer is the most frequently diagnosed cancer and the leading cause of cancer death among women worldwide, accounting for 11.8\% of all new cancer cases across both sexes in 2024 \cite{20}. Screening with full-field digital mammography (FFDM) reduces breast-cancer mortality but imposes a heavy reading burden, and historical hand-engineered detection systems failed to deliver measurable benefit in routine screening \cite{17}. Convolutional neural networks (CNNs) now reach or exceed radiologist area under the receiver operating characteristic curve (AUROC) \cite{11}, and meta-analyses report pooled AUROC of 0.87 for AI on digital mammography versus 0.81 for radiologists \cite{4}.
 
 Three trends motivate this work, each with a gap on the 4-view \vindr{} benchmark \cite{1}, which carries Breast Imaging Reporting and Data System (BI-RADS) labels. \textbf{(i)} Multi-view models that fuse the craniocaudal (CC) and mediolateral oblique (MLO) projections improve over single-view inference because findings often appear unambiguously in only one view \cite{10}, yet most published \vindr{} results train one image at a time. \textbf{(ii)} Transformer-based fusion allows feature-level interaction between views, yet multi-view designs typically concatenate global features. \textbf{(iii)} Monte Carlo (MC) Dropout uncertainty \cite{13} enables \emph{hybrid triage}, in which the AI reads its most-confident exams and refers the rest; Verboom et al. \cite{12} reduced workload by 38.1\% on 41,469 Dutch screening exams while preserving cancer detection rate, yet no published study has applied MC Dropout to \vindr{} and simulated such a policy. On \vindr{}, MamT4 \cite{18} reports AUROC=0.840$\pm$0.017; Abdikenov et al. \cite{2} showed contrast-limited adaptive histogram equalisation (CLAHE) and YOLOv12 gains in mean average precision, and Mellado et al. \cite{3} competitive patch-level F1 under limited annotation.
 
@@ -324,7 +324,7 @@ Std dev & 0.1436 & 0.1370 \\
 
 \subsection{Stage 5 --- Model ensemble}\label{sec:ens-results}
 
-The primary ensemble (16 BreastPairNet checkpoints with three breast-asymmetry models and TTA$\times$5; Section~\ref{sec:ens-method}) gives the \textbf{best result in the study}, AUROC=0.8458 at threshold 0.3414 (TP=73, TN=1577, FP=324, FN=26); \autoref{tab:ensemble-variants} lists its other metrics. It does not include ConvNeXt-Base or EfficientNet-B3 +reg models. Single-model PPV ranges from 0.109 to 0.263 (Stage~2) and 0.117 to 0.169 (Stage~3), consistent with the 4.95\% positive prevalence; screening prevalence is usually lower, so deployed PPV would be lower and calibrated, prevalence-adjusted thresholds would be needed before clinical use.
+The primary ensemble (16 BreastPairNet checkpoints with three breast-asymmetry models and TTA$\times$5; Section~\ref{sec:ens-method}) gives the \textbf{best result in the study}, AUROC=0.8458; at threshold 0.3414, TP=73, TN=1577, FP=324 and FN=26; \autoref{tab:ensemble-variants} lists its other metrics. It does not include ConvNeXt-Base or EfficientNet-B3 +reg models. Single-model PPV ranges from 0.109 to 0.263 (Stage~2) and 0.117 to 0.169 (Stage~3), consistent with the 4.95\% positive prevalence; screening prevalence is usually lower, so deployed PPV would be lower and calibrated, prevalence-adjusted thresholds would be needed before clinical use.
 
 \begin{table}[!t]
 \centering
@@ -385,7 +385,7 @@ The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{} (\
 
 \subsection{Overall contribution and statistical caveats}
 
-\autoref{tab:components} summarises the best model at each stage; Stage~1 is image-level while later stages are breast-level, and the best Stage~2 and Stage~3 models use different backbones. With 99 cancer-positive test pairs, individual 95\% CIs span $\pm$0.04--0.05 AUROC; overlapping CIs do not decide a comparison on the same cases, which needs a paired test (future work). The gains (+9.1\%, +10.0\%, +11.8\%) and the component ablation are therefore observed results, not established improvements.
+\autoref{tab:components} summarises the best model at each stage; Stage~1 is image-level while later stages are breast-level, and the best Stage~2 and Stage~3 models use different backbones. With 99 cancer-positive test pairs, individual 95\% CIs span $\pm$0.04--0.05 AUROC; overlapping CIs do not decide a comparison on the same cases, which needs a paired test not performed here. The gains (+9.1\%, +10.0\%, +11.8\%) and the component ablation are therefore observed results, not established improvements.
 
 \begin{table}[!t]
 \centering
@@ -409,7 +409,7 @@ The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{} (\
 
 \textbf{Limitations.} (i) 99 positive test pairs limit fine-grained comparison; (ii) large domain gap between \vindr{} and \rsna{}; (iii) 7,054 non-CC/MLO RSNA images excluded from pairing; (iv) each configuration was trained once with one seed and without cross-validation, so run-to-run variance is unknown, and no paired significance tests between models were performed; (v) Stage~1 is scored per image and later stages per breast.
 
-\textbf{Future work.} Paired bootstrap tests and repeated runs or five-fold cross-validation (iv), a same-backbone comparison to isolate cross-attention, and box-dropout to test the shortcut hypothesis are the first priorities. Validation on CBIS-DDSM and INbreast with RSNA fine-tuning (ii), and a prospective triage study with measured reader sensitivity, would then test generalisation and the assumed 85\% reader.
+\textbf{Future work.} Priorities are repeated runs or five-fold cross-validation (iv), retaining per-case predictions to allow paired tests, a same-backbone comparison to isolate cross-attention, and box-dropout to test the shortcut hypothesis; validation on CBIS-DDSM and INbreast with RSNA fine-tuning (ii) and a prospective triage study would then test generalisation and the assumed 85\% reader.
 
 \section{Conclusion}
 
@@ -455,7 +455,7 @@ The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{} (\
 
 \bibitem{19} W. J. Youden, ``Index for rating diagnostic tests,'' \emph{Cancer}, vol.~3, no.~1, pp.~32--35, 1950.
 
-\bibitem{20} F. Bray et al., ``Global cancer statistics 2022: GLOBOCAN estimates of incidence and mortality worldwide for 36 cancers in 185 countries,'' \emph{CA: A Cancer Journal for Clinicians}, vol.~74, no.~3, pp.~229--263, 2024.
+\bibitem{20} H. Sung et al., ``Global cancer statistics 2024: GLOBOCAN estimates of incidence and mortality worldwide for 34 cancers in 186 countries,'' \emph{CA: A Cancer Journal for Clinicians}, vol.~76, no.~4, p.~e70090, 2026.
 
 \end{thebibliography}
 
