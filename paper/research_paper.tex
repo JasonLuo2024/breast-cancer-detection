@@ -69,7 +69,7 @@ St.\ John's, NL, Canada}
 \maketitle
 
 \begin{abstract}
-Most published work on the VinDr-Mammo full-field digital mammography (FFDM) benchmark processes one view at a time, ignoring the craniocaudal (CC) and mediolateral oblique (MLO) pairing that radiologists rely on. We ask whether sharing information between the two views improves breast-level cancer detection, and build MamNet-6, a six-stage pipeline that adds multi-view fusion, spatial cross-attention, uncertainty quantification and hybrid triage simulation, with zero-shot validation on the RSNA 2022 dataset. The best of five single-view convolutional neural networks (CNNs), DenseNet-121, reached an area under the receiver operating characteristic curve (AUROC) of 0.756. BreastPairNet, a shared-backbone network that jointly processes the CC and MLO views, reached 0.826 (95\% confidence interval [CI] 0.776--0.871) and the CrossView Transformer 0.832 (0.783--0.875); these stage-to-stage differences have overlapping CIs and are not individually established, and among reported configurations using the same backbone, CrossView had lower observed AUROC than pooled fusion. A 16-model ensemble with test-time augmentation reached 0.846, with sensitivity of 0.657 at 90\% specificity and a positive predictive value (PPV) of 0.184. Hybrid triage at 50\% AI reads preserved 87.9\% sensitivity under oracle reader assumptions. Bounding-box outlines drawn on training images lowered AUROC by 0.12--0.20, suggesting shortcut learning, and zero-shot transfer to RSNA 2022 gave an AUROC of 0.601, a substantial gap between the two datasets.
+Most published work on the VinDr-Mammo full-field digital mammography (FFDM) benchmark looks at one view at a time, although radiologists read the craniocaudal (CC) and mediolateral oblique (MLO) views together. To test whether sharing information between the two views improves breast-level cancer detection, we built MamNet-6, a six-stage pipeline that adds multi-view fusion, spatial cross-attention, uncertainty estimation and a hybrid triage simulation, and tested it zero-shot on the RSNA 2022 dataset. The best of five single-view convolutional neural networks (CNNs), DenseNet-121, reached an area under the receiver operating characteristic curve (AUROC) of 0.756. BreastPairNet, which passes both views through a shared backbone, reached 0.826 (95\% confidence interval [CI] 0.776--0.871), and the CrossView Transformer reached 0.832 (0.783--0.875). These stage-to-stage differences have overlapping CIs and are not individually established, and among configurations sharing a backbone, CrossView had lower observed AUROC than pooled fusion. A 16-model ensemble with test-time augmentation reached 0.846, with a sensitivity of 0.657 at 90\% specificity and a positive predictive value (PPV) of 0.184. Letting the AI read 50\% of exams kept 87.9\% sensitivity with an oracle reader for the rest. Bounding boxes drawn on training images lowered AUROC by 0.12--0.20, which suggests shortcut learning, and zero-shot transfer to RSNA 2022 gave an AUROC of 0.601, a large gap between the two datasets.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -78,11 +78,11 @@ breast cancer detection, mammography, multi-view learning, uncertainty quantific
 
 \section{Introduction}
 
-\IEEEPARstart{B}{reast} cancer is the most frequently diagnosed cancer and the leading cause of cancer death among women worldwide, accounting for 11.8\% of all new cancer cases across both sexes in 2024 \cite{20}. Screening with full-field digital mammography (FFDM) reduces breast-cancer mortality but imposes a heavy reading burden, and historical hand-engineered detection systems failed to deliver measurable benefit in routine screening \cite{17}. Convolutional neural networks (CNNs) now reach or exceed radiologist area under the receiver operating characteristic curve (AUROC) \cite{11}, and meta-analyses report pooled AUROC of 0.87 for AI on digital mammography versus 0.81 for radiologists \cite{4}.
+\IEEEPARstart{B}{reast} cancer is the most frequently diagnosed cancer and the leading cause of cancer death among women worldwide, accounting for 11.8\% of all new cancer cases across both sexes in 2024 \cite{20}. Screening with full-field digital mammography (FFDM) lowers breast-cancer mortality but takes a great deal of radiologist time, and earlier hand-engineered detection systems brought no measurable benefit in routine screening \cite{17}. Convolutional neural networks (CNNs) now match or exceed radiologists in area under the receiver operating characteristic curve (AUROC) \cite{11}, and meta-analyses report a pooled AUROC of 0.87 for AI on digital mammography against 0.81 for radiologists \cite{4}.
 
-Three trends motivate this work, each with a gap on the 4-view \vindr{} benchmark \cite{1}, which carries Breast Imaging Reporting and Data System (BI-RADS) labels. \textbf{(i)} Multi-view models that fuse the craniocaudal (CC) and mediolateral oblique (MLO) projections improve over single-view inference because findings often appear unambiguously in only one view \cite{10}, yet most published \vindr{} results train one image at a time. \textbf{(ii)} Transformer-based fusion allows feature-level interaction between views, yet multi-view designs typically concatenate global features. \textbf{(iii)} Monte Carlo (MC) Dropout uncertainty \cite{13} enables \emph{hybrid triage}, in which the AI reads its most-confident exams and refers the rest; Verboom et al. \cite{12} reduced workload by 38.1\% on 41,469 Dutch screening exams while preserving cancer detection rate, yet no published study has applied MC Dropout to \vindr{} and simulated such a policy. On \vindr{}, MamT4 \cite{18} reports AUROC=0.840$\pm$0.017; Abdikenov et al. \cite{2} showed contrast-limited adaptive histogram equalisation (CLAHE) and YOLOv12 gains in mean average precision, and Mellado et al. \cite{3} competitive patch-level F1 under limited annotation.
+Three lines of work motivate this study, each leaving a gap on the four-view \vindr{} benchmark \cite{1}, which carries Breast Imaging Reporting and Data System (BI-RADS) labels. First, models that fuse the craniocaudal (CC) and mediolateral oblique (MLO) projections improve over single-view inference because findings often appear unambiguously in only one view \cite{10}, yet most published \vindr{} results still use one image at a time. Second, transformer-based fusion lets views interact at the feature level, but most designs simply concatenate global features. Third, Monte Carlo (MC) Dropout uncertainty \cite{13} enables \emph{hybrid triage}, in which the AI reads the exams it is most confident about and refers the rest; Verboom et al.\ \cite{12} cut workload by 38.1\% on 41,469 Dutch screening exams while preserving the cancer detection rate. No published study has applied MC Dropout to \vindr{} and simulated such a policy. On \vindr{}, MamT4 \cite{18} reports AUROC=0.840$\pm$0.017; other work includes the contrast-limited adaptive histogram equalisation (CLAHE) and YOLOv12 gains in mean average precision shown by Abdikenov et al.\ \cite{2}, and the competitive patch-level F1 under limited annotation reported by Mellado et al.\ \cite{3}.
 
-Our central question is whether sharing information between the CC and MLO views improves breast-level detection over single-view CNNs (Stage~1), by fusing pooled features (Stage~2, BreastPairNet) or by spatial cross-attention before pooling (Stage~3, CrossView Transformer). \mamnet{} then adds MC Dropout uncertainty (Stage~4), an ensemble with test-time augmentation (Stage~5) and hybrid triage with external validation on \rsna{} (Stage~6). Preprocessing is shared, Stage~3b is an ablation of Stage~3, and Stage~5 ensembles Stage~2 models. Proposed explanations are stated as hypotheses.
+Our central question is whether sharing information between the CC and MLO views improves breast-level detection over single-view CNNs (Stage~1). We test two ways: fusing pooled per-view features (Stage~2, BreastPairNet) and spatial cross-attention before pooling (Stage~3, CrossView Transformer). \mamnet{} then adds MC Dropout uncertainty (Stage~4), an ensemble with test-time augmentation (Stage~5), and hybrid triage with external validation on \rsna{} (Stage~6). All stages share preprocessing, Stage~3b is an ablation of Stage~3, and Stage~5 ensembles Stage~2 models. We present explanations of results as hypotheses.
 
 \section{Datasets}
 
@@ -90,25 +90,25 @@ Our central question is whether sharing information between the CC and MLO views
 
 \vindr{} \cite{1} is a Vietnamese FFDM benchmark of 20,000 Digital Imaging and Communications in Medicine (DICOM) images from 5,000 patients (R-CC, L-CC, R-MLO, L-MLO per study), with BI-RADS (1--5), density (A--D) and lesion bounding-box annotations. BI-RADS~1--3 images (14,036, 4,144 and 832) are labelled negative and BI-RADS~4--5 (824 and 164) positive, giving 988 positive images (4.94\%).
 
-The official split is 4,000 training patients (16,000 images) and 1,000 test patients (4,000 images). One ipsilateral CC+MLO pair per breast gives 8,000 training and 2,000 test pairs, of which 99 test pairs (4.95\%) are cancer-positive. A 5\% validation slice (\textasciitilde{}400 pairs) is held out for early stopping; the official test split is never used for model selection.
+The official split is 4,000 training patients (16,000 images) and 1,000 test patients (4,000 images). Taking one ipsilateral CC+MLO pair per breast gives 8,000 training and 2,000 test pairs, of which 99 test pairs (4.95\%) are cancer-positive. We hold out a 5\% validation slice (about 400 pairs) for early stopping, and the official test split is never used for model selection.
 
 \subsection{\rsna{} (external dataset)}
 
-The Radiological Society of North America (RSNA) 2022 screening dataset comprises 54,706 screening DICOMs from 11,913 patients, normalised as for \vindr{}. Excluding non-CC/MLO views leaves 23,826 CC+MLO pairs (19,062 training, 4,764 validation; 80/20 patient-level split).
+The Radiological Society of North America (RSNA) 2022 screening dataset contains 54,706 screening DICOMs from 11,913 patients, normalised as for \vindr{}. Excluding non-CC/MLO views leaves 23,826 CC+MLO pairs (19,062 training, 4,764 validation; 80/20 patient-level split).
 
 \section{Methods}
 
 \subsection{DICOM Preprocessing}
 
-(1) Decode with pydicom+\texttt{pylibjpeg}; (2) percentile-clip to [1\%,\,99\%]; (3) CLAHE \cite{14} (32$\times$32 tiles, clip-limit 2.0); (4) flip horizontally so the breast faces right when the left half is brighter, as breast tissue is brighter than the background. Output: 8-bit PNG replicated to 3 channels.
+Each image is decoded with pydicom and \texttt{pylibjpeg}, clipped to its 1st--99th intensity percentiles, enhanced with CLAHE \cite{14} (32$\times$32 tiles, clip limit 2.0), and flipped so the breast faces right whenever the left half is brighter (breast tissue is brighter than background). Output is an 8-bit PNG replicated to three channels.
 
 \subsection{Single-view CNN Backbones (Stage 1)}
 
-Five configurations: \textbf{VGG19}, \textbf{ResNet-50} \cite{7} (224\,px), \textbf{ResNet-50} (384\,px), \textbf{EfficientNet-B3} \cite{9} (224\,px), \textbf{DenseNet-121} \cite{8} (224\,px). All use ImageNet weights, focal loss \cite{5} ($\alpha$=0.25, $\gamma$=2.0; an algorithm-level imbalance method \cite{15}), WeightedRandomSampler, and AdamW with cosine decay. 20 epochs with early stopping on validation AUROC.
+We compare five configurations: VGG19, ResNet-50 \cite{7} at 224 and 384\,px, and EfficientNet-B3 \cite{9} and DenseNet-121 \cite{8} at 224\,px. All use ImageNet weights, focal loss \cite{5} ($\alpha$=0.25, $\gamma$=2.0; an algorithm-level imbalance method \cite{15}), a WeightedRandomSampler and AdamW with cosine decay, trained for 20 epochs with early stopping on validation AUROC.
 
 \subsection{BreastPairNet (Stage 2)}
 
-A shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$ (Fig.~\ref{fig:arch}(a)), fused by \textbf{concatenation} ($2d$-dimensional multilayer perceptron (MLP), dropout 0.5) and \textbf{attention} (learned per-view scalar weights via softmax). The \textbf{+reg} variant adds stronger elastic deformation (\texttt{alpha}=50, \texttt{sigma}=5), mixup ($\alpha$=0.2), and label smoothing (0.1). The backbone is frozen for 3 epochs, then all parameters train at learning rate 1e-4.
+A shared backbone turns each view into a global-average-pooled vector, $\mathbf{f}_{CC},\mathbf{f}_{MLO}\in\mathbb{R}^d$ (Fig.~\ref{fig:arch}(a)). The two vectors are fused either by concatenation, followed by a $2d$-dimensional multilayer perceptron (MLP) with dropout 0.5, or by attention with learned per-view scalar weights (softmax). The +reg variant adds stronger elastic deformation (\texttt{alpha}=50, \texttt{sigma}=5), mixup ($\alpha$=0.2) and label smoothing (0.1). The backbone is frozen for 3 epochs, then all parameters train at learning rate 1e-4.
 
 \begin{figure}[!t]
 \centering
@@ -147,33 +147,33 @@ A shared backbone produces per-view global-average-pooled vectors $\mathbf{f}_{C
 
 \subsection{CrossView Transformer (Stage 3)}
 
-Spatial cross-attention replaces pooled fusion (Fig.~\ref{fig:arch}(b)). The last spatial feature maps of the shared backbone (DenseNet-121, EfficientNet-B3 or ConvNeXt-Base \cite{16}) are flattened to tokens and passed to a two-layer Transformer encoder in which each view's queries attend to the other view's keys and values; the outputs are global-averaged and concatenated for the classifier.
+Spatial cross-attention replaces pooled fusion (Fig.~\ref{fig:arch}(b)). The last spatial feature maps of the shared backbone (DenseNet-121, EfficientNet-B3 or ConvNeXt-Base \cite{16}) are flattened into tokens and passed through a two-layer Transformer encoder in which each view's queries attend to the other view's keys and values. The outputs are then global-averaged and concatenated for the classifier.
 
 \subsection{Bounding-box Annotation (Stage 3b)}
 
-Ground-truth boxes (\vindr{}) were drawn as white outlines (40-px line width) on training images only. For \rsna{}, a YOLOv8s detector pre-trained on \vindr{} was used (0.8\% sensitivity; noisy hints only). Test sets always used original unannotated PNGs to prevent label leakage.
+Ground-truth boxes from \vindr{} were drawn as white outlines, 40\,px wide, on training images only. For \rsna{}, a YOLOv8s detector pre-trained on \vindr{} supplied boxes (0.8\% sensitivity; noisy hints only). Test images remained unannotated to prevent leakage from the box annotations.
 
 \subsection{MC Dropout (Stage 4)}
 
-MC Dropout \cite{13} keeps dropout active at test time (BatchNorm in eval mode), giving a predictive distribution without retraining. $N=20$ stochastic forward passes per test pair yield probabilities $\{p_i\}_{i=1}^{20}$; their mean $\bar{p}$ is used for classification and the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$ quantifies predictive uncertainty. The classification threshold is selected by maximising Youden's~J index \cite{19} ($J = \text{sensitivity} + \text{specificity} - 1$) on the validation set; the Stage~1 baselines (\autoref{tab:single-view}) are reported at the default 0.5 threshold.
+MC Dropout \cite{13} keeps dropout on at test time (BatchNorm in eval mode), giving a predictive distribution without retraining. We run $N=20$ stochastic forward passes per test pair, classify with the mean probability $\bar{p}$ of the samples $\{p_i\}_{i=1}^{20}$, and measure uncertainty with the binary entropy $H(\bar{p})=-\bar{p}\log\bar{p}-(1-\bar{p})\log(1-\bar{p})$. The classification threshold maximises Youden's~J index \cite{19} ($J = \text{sensitivity} + \text{specificity} - 1$) on the validation set. Stage~1 baselines (\autoref{tab:single-view}) use the default 0.5 threshold.
 
 \subsection{Ensemble (Stage 5)}\label{sec:ens-method}
 
-The ensemble averages the predicted probabilities of its member checkpoints, each itself averaged over five test-time augmentation (TTA) passes. The primary ensemble combines 16 BreastPairNet checkpoints with three breast-asymmetry models, which score each breast jointly with the contralateral breast of the same patient. Two variants are compared in Section~\ref{sec:ens-results}.
+The ensemble averages the predicted probabilities of its member checkpoints, each of which is itself averaged over five test-time augmentation (TTA) passes. The primary ensemble combines 16 BreastPairNet checkpoints with three breast-asymmetry models, which score each breast together with the opposite breast of the same patient. Section~\ref{sec:ens-results} compares two variants.
 
 \subsection{Hybrid Triage (Stage 6)}
 
-Following Verboom et al.\ \cite{12}, cases are sorted by ascending predictive entropy; the K most-confident fraction is routed to AI and the remainder to a radiologist. We use the MC Dropout DenseNet-121/concat model (Stage~4); an AI-read breast is called positive when its mean probability exceeds that model's Youden-optimal threshold (0.3138). Overall sensitivity is $(\mathrm{TP}_{\mathrm{AI}} + s_{\mathrm{reader}}\,N_{\mathrm{pos,referred}})/N_{\mathrm{pos}}$, with reader sensitivity $s_{\mathrm{reader}}=1$ (oracle) or $0.85$.
+Following Verboom et al.\ \cite{12}, we sort cases by predictive entropy and send the most confident fraction K to the AI and the rest to a radiologist. AI decisions come from the MC Dropout DenseNet-121/concat model (Stage~4), which calls a breast positive above its Youden-optimal threshold (0.3138). Overall sensitivity is $(\mathrm{TP}_{\mathrm{AI}} + s_{\mathrm{reader}}\,N_{\mathrm{pos,referred}})/N_{\mathrm{pos}}$, with reader sensitivity $s_{\mathrm{reader}}=1$ for an oracle reader or $0.85$.
 
 \subsection{Training and evaluation}\label{sec:eval}
 
-Models were trained on an NVIDIA RTX 5070 (12\,GB) with FP16 automatic mixed precision and AdamW (weight decay 1e-4 for Stage~1, 1e-3 for Stage~2). The primary metric is AUROC; we also report F1 at Youden threshold, sensitivity, specificity, \textbf{\satninety{}} (sensitivity at 90\% specificity), \textbf{S@95\%} (sensitivity at 95\% specificity) and \textbf{PPV} (positive predictive value, TP/(TP+FP) for true and false positives at the Youden-optimal threshold). 95\% percentile bootstrap confidence intervals (CIs; $n$=2000 resamples) are computed on the 2,000-pair test split (99 cancer-positive). No paired significance tests between models were performed, so no difference between models is reported as statistically significant.
+All models were trained on one NVIDIA RTX 5070 (12\,GB) with FP16 automatic mixed precision and AdamW (weight decay 1e-4 for Stage~1 and 1e-3 for Stage~2). AUROC is the primary metric. We also report F1 at the Youden threshold, sensitivity, specificity, \satninety{} and S@95\% (sensitivity at 90\% and 95\% specificity), and PPV, the positive predictive value TP/(TP+FP), where TP and FP are the true and false positives at the Youden-optimal threshold. 95\% percentile bootstrap confidence intervals (CIs; $n$=2000 resamples) are computed on the 2,000-pair test split (99 cancer-positive). No paired significance tests between models were performed, so no difference between models is reported as statistically significant.
 
 \section{Results and Discussion}
 
-\subsection{Stage 1 --- Single-view baselines}
+\subsection{Stage 1: Single-view baselines}
 
-DenseNet-121 achieves the best AUROC (0.7564) but only 24.8\% sensitivity at the default threshold (\autoref{tab:single-view}). All five models overfit (train F1~$\approx$~0.98) and reach only 40--45\% sensitivity at 90\% specificity, well below the $\sim$85\% radiologist sensitivity in screening \cite{17}.
+DenseNet-121 has the best AUROC (0.7564) but only 24.8\% sensitivity at the default threshold (\autoref{tab:single-view}). All five models overfit (train F1~$\approx$~0.98), and at 90\% specificity they reach only 40--45\% sensitivity, well below the roughly 85\% sensitivity of radiologists in screening \cite{17}.
 
 \begin{table}[!t]
 \centering
@@ -197,9 +197,9 @@ ResNet-50 (384 px) & 384 px & 0.2879 & 0.9821 & 0.3529 & 0.7489 & 0.4495 \\
 \end{tabular}}
 \end{table}
 
-\subsection{Stage 2 --- Multi-view BreastPairNet}
+\subsection{Stage 2: Multi-view BreastPairNet}
 
-The best model, \textbf{EfficientNet-B3 + attention + +reg}, reaches AUROC=0.8256 (95\% CI 0.7755--0.8707), a +9.1\% relative gain over single-view DenseNet-121 (\autoref{tab:breastpairnet}). This is consistent with lesions appearing unambiguously in only one projection; we hypothesise that joint CC/MLO conditioning reduces view-specific false positives, though the contributions of shared weights and fusion cannot be separated, and part of the change reflects the move from image- to breast-level scoring. As each configuration was trained once, the CIs in \autoref{tab:breastpairnet} and \autoref{tab:crossview} reflect test sampling, not run-to-run variability. The best Stage~2 and Stage~3 models peaked early (epochs 7 and 8) and overfit thereafter.
+The best model, EfficientNet-B3 with attention fusion and +reg, reaches AUROC=0.8256 (95\% CI 0.7755--0.8707), a 9.1\% relative gain over single-view DenseNet-121 (\autoref{tab:breastpairnet}). This is consistent with lesions appearing unambiguously in only one projection, and conditioning on both views may reduce view-specific false positives, though shared weights and fusion cannot be separated. The comparison also changes from image-level to breast-level scoring, so it does not isolate the effect of multi-view fusion. Because each configuration was trained once, the CIs in \autoref{tab:breastpairnet} and \autoref{tab:crossview} reflect test sampling, not run-to-run variation. The best Stage~2 and Stage~3 models peaked at epochs 7 and 8, then overfit.
 
 \begin{table*}[!t]
 \centering
@@ -238,9 +238,9 @@ EfficientNet-B3 & attention & 512 px & 0.8175 [0.7698--0.8661] & 0.2807 & 0.7273
 \par\vspace{3pt}{\raggedright\footnotesize PPV = TP/(TP+FP) at the Youden-optimal threshold. At 4.95\% prevalence, PPV is inherently low; higher PPV reflects a more conservative threshold (lower sensitivity). All CIs via 2,000-resample percentile bootstrap on the 2,000-pair test split.\par}
 \end{table*}
 
-Three observations stand out. \textbf{(i) +reg consistently lifts AUROC} by 0.008 to 0.021 across all backbone/fusion pairs; with only $\sim$395 cancer-positive training pairs, the stronger augmentation likely acts as an implicit regulariser. \textbf{(ii) Resolution scaling is not uniformly beneficial}: DenseNet-121 benefits from 512\,px (+0.014), but EfficientNet-B3 +reg at 224\,px (0.8256) beats 512\,px without +reg (0.8175). \textbf{(iii) ResNet-50 degrades at 384\,px} (0.7467 vs 0.7962 at 224\,px), possibly because of the smaller batch size needed to fit GPU memory.
+The +reg recipe raised AUROC by 0.008 to 0.021 for every backbone and fusion pair. With only about 395 cancer-positive training pairs, the extra augmentation probably acts as a regulariser. Higher resolution did not always help: DenseNet-121 gained 0.014 at 512\,px, but EfficientNet-B3 with +reg at 224\,px (0.8256) beat the 512\,px version without +reg (0.8175). ResNet-50 got worse at 384\,px (0.7467 vs 0.7962), possibly because the batch had to shrink to fit GPU memory.
 
-\subsection{Stage 3 --- CrossView Transformer}
+\subsection{Stage 3: CrossView Transformer}
 
 \begin{table*}[!t]
 \centering
@@ -264,11 +264,11 @@ DenseNet-121 & VinDr+RSNA & 0.8028 [0.7484--0.8536] & 0.2640 & 0.6667 & 0.165 & 
 \end{tabular}}
 \end{table*}
 
-\textbf{ConvNeXt-Base} achieves the best AUROC, 0.8317 (+10.0\% over single-view DenseNet-121), only 0.006 above the best BreastPairNet, a difference that was not tested statistically. Among reported configurations using the same backbone, CrossView had lower observed AUROC (DenseNet-121 0.7874 vs 0.8073; EfficientNet-B3 0.7795 vs 0.8048; unpaired single runs), so ConvNeXt-Base's result may owe more to the backbone than to cross-attention, and the benefit of preserving spatial information before pooling remains a hypothesis. DenseNet-121 with \vindr{}+\rsna{} joint training reaches 0.8028, suggesting a modest cross-dataset benefit (single runs, not tested). Chest-X-ray pretraining via torchxrayvision\footnote{torchxrayvision: \texttt{github.com/mlmed/torchxrayvision}} underperforms ImageNet initialisation (0.7648 vs 0.7874), consistent with domain mismatch between lung radiographs and mammographic texture, though tentatively, as the configurations also differ in other ways.
+ConvNeXt-Base gives the best CrossView result, AUROC=0.8317 (10.0\% above single-view DenseNet-121). That is only 0.006 above the best BreastPairNet, and we did not test the difference statistically. Among reported configurations sharing a backbone, CrossView had lower observed AUROC than BreastPairNet (DenseNet-121 0.7874 vs 0.8073; EfficientNet-B3 0.7795 vs 0.8048; unpaired single runs). ConvNeXt-Base's result may therefore owe more to the backbone than to cross-attention, and the benefit of preserving spatial information before pooling remains a hypothesis. Joint \vindr{}+\rsna{} training gives 0.8028 with DenseNet-121, suggesting a modest cross-dataset benefit (single runs, not tested). Chest-X-ray pretraining from torchxrayvision\footnote{torchxrayvision: \texttt{github.com/mlmed/torchxrayvision}} does worse than ImageNet initialisation (0.7648 vs 0.7874). Domain mismatch between lung radiographs and mammograms may explain this, tentatively, as the configurations also differ in other ways.
 
-\subsection{Stage 3b --- Bounding-box annotation ablation}
+\subsection{Stage 3b: Bounding-box annotation ablation}
 
-\textbf{Annotation degrades AUROC by 0.122--0.201 in all four pairs} (\autoref{tab:annotation-ablation}). Training F1 reaches $\sim$0.97 after the backbone unfreezes at epoch 4 while test AUROC falls; we hypothesise that the painted boxes act as a texture shortcut, correlated with the label in training but absent at test time, consistent with shortcut learning in medical imaging, though we did not test this directly. Possible remedies, all speculative, are box-dropout, test-time box injection from a lesion detector, and cropping to the box region.
+Drawing boxes on the training images lowered AUROC by 0.122--0.201 in all four pairs (\autoref{tab:annotation-ablation}). Training F1 climbs to about 0.97 once the backbone unfreezes at epoch 4, while test AUROC falls. We hypothesise that the network learns the white outlines as a texture shortcut that tracks the label in training but is missing at test time, consistent with shortcut learning in medical imaging; we did not test this directly. Box-dropout, test-time box injection from a lesion detector, or cropping to the box region might help but are untested.
 
 \begin{table}[!t]
 \centering
@@ -290,9 +290,9 @@ EfficientNet-B3 & 0.6020 [0.5460--0.6617] & -0.178 \\
 \end{tabular}}
 \end{table}
 
-\subsection{Stage 4 --- MC Dropout uncertainty quantification}
+\subsection{Stage 4: MC Dropout uncertainty quantification}
 
-MC Dropout slightly improves AUROC (+0.003, within the bootstrap CI) and raises sensitivity from 0.7374 to 0.7677 but lowers specificity from 0.7249 to 0.7007, each at its own Youden threshold (\autoref{tab:mc-dropout}). More importantly, the mean entropy is \textbf{0.5670} on cancer-positive pairs versus \textbf{0.5112} on negatives (\autoref{tab:mc-entropy}), a 0.056-nat gap that enables the Stage~6 triage policy.
+MC Dropout raises AUROC only slightly (+0.003, within the bootstrap CI). Sensitivity rises from 0.7374 to 0.7677 while specificity falls from 0.7249 to 0.7007, each at its own Youden threshold (\autoref{tab:mc-dropout}). More useful is the entropy, with mean 0.5670 on cancer-positive pairs and 0.5112 on negatives (\autoref{tab:mc-entropy}); the Stage~6 triage policy relies on this 0.056-nat gap.
 
 \begin{table}[!t]
 \centering
@@ -322,9 +322,9 @@ Std dev & 0.1436 & 0.1370 \\
 \par\vspace{3pt}{\raggedright\footnotesize Gap: $+$0.056 nats. Higher entropy $\Rightarrow$ refer high-uncertainty cases.\par}
 \end{table}
 
-\subsection{Stage 5 --- Model ensemble}\label{sec:ens-results}
+\subsection{Stage 5: Model ensemble}\label{sec:ens-results}
 
-The primary ensemble (16 BreastPairNet checkpoints with three breast-asymmetry models and TTA$\times$5; Section~\ref{sec:ens-method}) gives the \textbf{best result in the study}, AUROC=0.8458; at threshold 0.3414, TP=73, TN=1577, FP=324 and FN=26; \autoref{tab:ensemble-variants} lists its other metrics. It does not include ConvNeXt-Base or EfficientNet-B3 +reg models. Single-model PPV ranges from 0.109 to 0.263 (Stage~2) and 0.117 to 0.169 (Stage~3), consistent with the 4.95\% positive prevalence; screening prevalence is usually lower, so deployed PPV would be lower and calibrated, prevalence-adjusted thresholds would be needed before clinical use.
+The primary ensemble (16 BreastPairNet checkpoints with three breast-asymmetry models and TTA$\times$5; Section~\ref{sec:ens-method}) gives the best result in the study, AUROC=0.8458. At threshold 0.3414 it has TP=73, TN=1577, FP=324 and FN=26 (other metrics in \autoref{tab:ensemble-variants}). It does not include ConvNeXt-Base or EfficientNet-B3 +reg models. Single-model PPV ranges from 0.109 to 0.263 (Stage~2) and 0.117 to 0.169 (Stage~3), in line with the 4.95\% positive prevalence. Screening prevalence is usually lower, so deployed PPV would be lower; clinical use would require calibrated predictions and prevalence-adjusted thresholds.
 
 \begin{table}[!t]
 \centering
@@ -347,15 +347,15 @@ RSNA$^{c}$ & 16 & 0.6008 & 0.3909 & 0.7598 & --- & --- & 0.1636 & --- \\
 \par\vspace{3pt}{\raggedright\footnotesize Sens/Spec: sensitivity/specificity. ---: not reported. $^{c}$AUROC 95\% CI 0.5577--0.6585. PPV=0.184 means 1 in 5.4 recalls is cancer-positive at this threshold; at 4.95\% test prevalence, this is consistent with reported breast-cancer AI triage literature (PPV 15--25\%).\par}
 \end{table}
 
-Two variants, adding all CrossView checkpoints including lower-epoch snapshots (25 models) and a selective ensemble of the top-3 +reg BreastPairNet, top-5 CrossView and three asymmetry models (11 models), differ from the primary ensemble by at most 0.0017 AUROC; with no ensemble CIs reported and no paired test, these differences are unassessed. \textbf{Why adding CrossView checkpoints did not raise AUROC.} The 25-model ensemble adds ConvNeXt-Base (the best single model) among several CrossView checkpoints, so ConvNeXt-Base's own effect is not isolated. We offer two hypotheses, neither measured here: ensemble gains depend on error diversity rather than member rank, and the CrossView members may make correlated errors; and AUROC depends only on the ranking of the averaged scores, so members whose probabilities lie on a different scale can dominate the average and change that ranking even when each ranks cases well alone. Measuring pairwise error correlation and calibrating members before averaging would test these.
+One variant adds all CrossView checkpoints including lower-epoch snapshots (25 models); the other is a selective ensemble of the top-3 +reg BreastPairNet, top-5 CrossView and three asymmetry models (11 models). Both are within 0.0017 AUROC of the primary ensemble; with no ensemble CIs reported and no paired test, these differences are unassessed. Adding the CrossView checkpoints, ConvNeXt-Base among them, did not raise AUROC; as several were added at once, ConvNeXt-Base's own effect is not isolated. We have two unmeasured hypotheses. Ensembles gain from error diversity rather than from the rank of their members, and the CrossView models may make correlated errors. Also, AUROC depends only on how averaged scores rank cases, so members on a different probability scale can dominate the average and change that ranking even if each ranks cases well alone. Measuring error correlation and calibrating members would test this.
 
-\subsection{Stage 6 --- Hybrid triage simulation}
+\subsection{Stage 6: Hybrid triage simulation}
 
-Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity with 50\% workload reduction} (\autoref{tab:triage-sweep}). Under realistic 85\% radiologist sensitivity \cite{17}, the same K=50\% yields 77.3\% --- below the clinical floor. Achieving $\geq$80\% overall sensitivity under realistic conditions requires K$\leq$40\%.
+With an oracle reader, AI reading of K=50\% of exams keeps 87.9\% overall sensitivity and halves radiologist workload (\autoref{tab:triage-sweep}); with a realistic 85\% radiologist sensitivity \cite{17}, it gives 77.3\%, below the clinical floor. Keeping at least 80\% overall sensitivity under realistic conditions requires K$\leq$40\%.
 
 \begin{table}[!t]
 \centering
-\caption{Hybrid triage sweep. Frac: share of exams read by AI alone; Wkld $\Delta$: change in radiologist workload; Sen (or.)/(85\%r): overall sensitivity with an oracle/85\%-sensitive radiologist; AI Sen: sensitivity on AI-read exams; Recall: AI recall rate.}
+\caption{Hybrid triage sweep. Frac: AI-read share; Wkld $\Delta$: radiologist workload change; Sen (or.)/(85\%r): overall sensitivity with an oracle/85\%-sensitive reader; AI Sen: sensitivity on AI-read exams; Recall: AI recall rate.}
 \label{tab:triage-sweep}
 {\scriptsize\setlength{\tabcolsep}{2pt}%
 \begin{tabular}{|l|c|c|c|c|c|}
@@ -381,15 +381,15 @@ Under oracle assumptions, \textbf{K=50\% delivers 87.9\% overall sensitivity wit
 
 \subsection{External validation and comparison to literature}
 
-The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{} (\autoref{tab:ensemble-variants}). The gap may reflect differences between the datasets' populations, such as breast density and lesion prevalence \cite{1,11}, and in FFDM equipment and post-processing; the S@90\% drop ($-75.1\%$) suggests the conservative side of the decision surface is most affected. Our best ensemble exceeds MamT4 \cite{18} (AUROC=0.840), but MamT4 excludes BI-RADS~3 cases from evaluation, while our pipeline retains them as negative, so the values are not directly comparable; McKinney et al. \cite{11} (AUROC=0.889) and Yoon et al. \cite{4} (pooled AUROC=0.87) likewise use different data. Beyond AUROC, \mamnet{} contributes an ablation that examines multi-view fusion, regularisation, spatial cross-attention and ensemble size, which MamT4 does not systematically ablate, and adds uncertainty quantification and a hybrid triage simulation grounded in a published clinical framework \cite{12}.
+Applied zero-shot to \rsna{}, the best ensemble drops sharply (\autoref{tab:ensemble-variants}). The datasets may differ in population (e.g., breast density, lesion prevalence) \cite{1,11} and in FFDM equipment and post-processing; the 75.1\% drop in S@90\% suggests the conservative end of the decision surface suffers most. Our best ensemble scores higher than MamT4 \cite{18} (AUROC=0.840), but MamT4 excludes BI-RADS~3 cases from evaluation while our pipeline keeps them as negatives, so the two values are not directly comparable. McKinney et al.\ \cite{11} (AUROC=0.889) and Yoon et al.\ \cite{4} (pooled AUROC=0.87) likewise use different data. Beyond AUROC, \mamnet{} ablates multi-view fusion, regularisation, spatial cross-attention and ensemble size, which MamT4 does not systematically ablate, and adds uncertainty estimation and triage simulation based on a published framework \cite{12}.
 
 \subsection{Overall contribution and statistical caveats}
 
-\autoref{tab:components} summarises the best model at each stage; Stage~1 is image-level while later stages are breast-level, and the best Stage~2 and Stage~3 models use different backbones. With 99 cancer-positive test pairs, individual 95\% CIs span $\pm$0.04--0.05 AUROC; overlapping CIs do not decide a comparison on the same cases, which needs a paired test not performed here. The gains (+9.1\%, +10.0\%, +11.8\%) and the component ablation are therefore observed results, not established improvements.
+\autoref{tab:components} lists the best model at each stage; Stage~1 is image-level while later stages are breast-level, and the best Stage~2 and Stage~3 models use different backbones. With 99 cancer-positive test pairs, individual 95\% CIs span $\pm$0.04--0.05 AUROC. Overlapping CIs do not settle a comparison on the same cases, which needs a paired test we did not perform, so the 9.1\%, 10.0\% and 11.8\% gains and the ablation are observed results, not established improvements.
 
 \begin{table}[!t]
 \centering
-\caption{Best model per stage on the \vindr{} test split. $\Delta$: observed change from the previous row (unpaired, untested). Stages~4 and 6 add uncertainty and triage rather than a new classifier; the Stage~3b annotation ablation is in \autoref{tab:annotation-ablation}.}
+\caption{Best model per stage on the \vindr{} test split. $\Delta$: observed change from the previous row (unpaired, untested). Stages~4 and 6 add no new classifier.}
 \label{tab:components}
 {\scriptsize\setlength{\tabcolsep}{2pt}%
 \begin{tabular}{|l|l|c|c|l|}
@@ -407,13 +407,13 @@ The best ensemble (AUROC=0.8458 on \vindr{}) was applied zero-shot to \rsna{} (\
 \end{tabular}}
 \end{table}
 
-\textbf{Limitations.} (i) 99 positive test pairs limit fine-grained comparison; (ii) large domain gap between \vindr{} and \rsna{}; (iii) 7,054 non-CC/MLO RSNA images excluded from pairing; (iv) each configuration was trained once with one seed and without cross-validation, so run-to-run variance is unknown, and no paired significance tests between models were performed; (v) Stage~1 is scored per image and later stages per breast.
+\textbf{Limitations.} Only 99 positive test pairs limit fine-grained comparison, the domain gap between \vindr{} and \rsna{} is large, and 7,054 non-CC/MLO RSNA images were excluded from pairing. Each configuration was trained once (one seed, no cross-validation), so run-to-run variance is unknown, and no paired significance tests were performed.
 
-\textbf{Future work.} Priorities are repeated runs or five-fold cross-validation (iv), retaining per-case predictions to allow paired tests, a same-backbone comparison to isolate cross-attention, and box-dropout to test the shortcut hypothesis; validation on CBIS-DDSM and INbreast with RSNA fine-tuning (ii) and a prospective triage study would then test generalisation and the assumed 85\% reader.
+\textbf{Future work.} Priorities are repeated runs or five-fold cross-validation, keeping per-case predictions to allow paired tests, a same-backbone comparison to isolate cross-attention, and box-dropout to test the shortcut hypothesis. CBIS-DDSM/INbreast validation, \rsna{} fine-tuning and a prospective triage study would test generalisation and the assumed 85\% reader.
 
 \section{Conclusion}
 
-\mamnet{} raises \vindr{} AUROC from 0.7564 (best single-view CNN) to 0.8458 (16-model ensemble), an observed, untested 11.8\% gain. Bounding-box outlines lowered AUROC by 0.12--0.20, plausibly via shortcut learning; among same-backbone configurations, CrossView had lower observed AUROC than BreastPairNet. With MC Dropout triage, 50\% AI reads keep 87.9\% sensitivity with an oracle reader but 77.3\% with an 85\%-sensitive reader, so K$\leq$40\% is needed to stay above the 80\% floor; \rsna{} (AUROC=0.6008) shows an open generalisation gap.
+\mamnet{} raises \vindr{} AUROC from 0.7564 (best single-view CNN) to 0.8458 (16-model ensemble), an observed but untested 11.8\% gain. Training-image boxes lowered AUROC by 0.12--0.20, plausibly through shortcut learning, and among configurations sharing a backbone, CrossView had lower observed AUROC than BreastPairNet. With MC Dropout triage, 50\% AI reads keep 87.9\% sensitivity with an oracle reader but 77.3\% with an 85\%-sensitive reader, so K$\leq$40\% is needed to stay above the 80\% floor. \rsna{} (AUROC=0.6008) shows a generalisation gap.
 
 \noindent\textbf{Author contributions.} \textbf{Haoming Luo:} Software, Formal analysis, Investigation, Visualization, Writing -- original draft; \textbf{Matthew Hamilton:} Conceptualization, Methodology, Supervision, Writing -- review \& editing; \textbf{Oscar Meruvia-Pastor:} Supervision, Writing -- review \& editing; \textbf{Edward Kendall:} Supervision, Writing -- review \& editing.
 
